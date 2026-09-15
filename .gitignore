@@ -1,0 +1,13 @@
+# Godot
+.godot/
+*.import
+export.cfg
+export_presets.cfg
+
+# OS
+.DS_Store
+Thumbs.db
+*~
+
+# User saves (local only)
+user://

@@ -1,0 +1,119 @@
+[gd_scene load_steps=2 format=3 uid="uid://bq3w_longrest"]
+
+[ext_resource type="Script" path="res://scripts/LongRest.gd" id="1"]
+
+[node name="LongRest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.09, 0.11, 0.07, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Center"]
+custom_minimum_size = Vector2(700, 560)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(1, 0.851, 0.298, 1)
+text = "⛺  LONG REST"
+horizontal_alignment = 1
+
+[node name="Stats" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Quest 1 complete | 0/10 | Gold 0 | Lives 3"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Sep1" type="HSeparator" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="PathsLabel" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.95, 0.91, 0.78, 1)
+text = "Choose your next path:"
+
+[node name="RowPaths" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="BtnForest" type="Button" parent="Center/Panel/VBox/RowPaths"]
+custom_minimum_size = Vector2(150, 64)
+layout_mode = 2
+text = "🌲 FOREST
+(easier)"
+
+[node name="BtnCrypt" type="Button" parent="Center/Panel/VBox/RowPaths"]
+custom_minimum_size = Vector2(150, 64)
+layout_mode = 2
+text = "☠  CRYPT
+(standard)"
+
+[node name="BtnTower" type="Button" parent="Center/Panel/VBox/RowPaths"]
+custom_minimum_size = Vector2(150, 64)
+layout_mode = 2
+text = "🏰 TOWER
+(harder, richer)"
+
+[node name="Sep2" type="HSeparator" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="UpgradesLabel" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.95, 0.91, 0.78, 1)
+text = "Spend Gold on Upgrades:"
+
+[node name="Upgrades" type="VBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Sep3" type="HSeparator" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="RowSave" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="BtnSave" type="Button" parent="Center/Panel/VBox/RowSave"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+text = "💾  Save"
+
+[node name="BtnExit" type="Button" parent="Center/Panel/VBox/RowSave"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+text = "Exit to Menu"
