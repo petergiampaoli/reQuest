@@ -38,12 +38,44 @@ var upgrades: Dictionary = {
 	"gold_bonus": 0,  # +1 gold per task win per level
 }
 
+# Trinkets — bought at the shop (Long Rest / Start Menu). Equipped in slots, effects per quest.
+var owned_trinkets: Dictionary = {}        # id -> count
+var equipped_trinkets: Array[String] = []  # up to MAX_TRINKET_SLOTS
+var trinket_auto_used: bool = false        # stone of grace used this quest (resets at quest start)
+var shop_return_scene: String = "res://scenes/LongRest.tscn"
+
 # --- Constants ---
 const BASE_TASK_TIME: float = 10.0
 const UPGRADE_COSTS := {
 	"extra_time": 15,
 	"extra_life": 25,
 	"gold_bonus": 20,
+}
+const MAX_TRINKET_SLOTS: int = 3
+
+# Trinket catalog — id -> {name, desc, cost, max_owned, max_equipped}
+const TRINKETS := {
+	"heart_charm": {
+		"name": "Heart Charm",
+		"desc": "+1 heart. Restores you to 3 hearts (+1 per charm) at quest start.",
+		"cost": 60,
+		"max_owned": 1,
+		"max_equipped": 1,
+	},
+	"gold_purse": {
+		"name": "Golden Purse",
+		"desc": "+50% gold from each task victory. Stacks.",
+		"cost": 45,
+		"max_owned": 2,
+		"max_equipped": 2,
+	},
+	"stone_of_grace": {
+		"name": "Stone of Grace",
+		"desc": "Auto-completes your next failed task. Once per quest.",
+		"cost": 90,
+		"max_owned": 1,
+		"max_equipped": 1,
+	},
 }
 
 func _ready() -> void:
@@ -52,6 +84,10 @@ func _ready() -> void:
 func start_new_quest() -> void:
 	current_task_index = 0
 	successes_this_quest = 0
+	trinket_auto_used = false
+	# Heart Charm: restore to full hearts + extra per charm equipped
+	if heart_trinket_count() > 0:
+		lives = maxi(lives, 3 + heart_trinket_count())
 	# slight ramp each quest
 	difficulty = 1.0 + (quest_number - 1) * 0.12
 	quest_started.emit()
@@ -65,6 +101,8 @@ func on_task_finished(success: bool, time_left: float) -> void:
 		var bonus: int = 5 + upgrades["gold_bonus"] * 2
 		# speed bonus: leftover time
 		bonus += int(time_left)
+		# Golden Purse multiplier
+		bonus = int(bonus * gold_bonus_multiplier())
 		gold += bonus
 	else:
 		total_failures += 1
@@ -137,4 +175,55 @@ func reset_progress() -> void:
 	last_run_stats = {}
 	difficulty = 1.0
 	upgrades = {"extra_time": 0, "extra_life": 0, "gold_bonus": 0}
+	owned_trinkets = {}
+	equipped_trinkets = []
+	trinket_auto_used = false
 	SaveManager.save_game(self)
+
+# --- Trinket helpers ---
+func trinket_count(id: String) -> int:
+	return int(owned_trinkets.get(id, 0))
+
+func equipped_count(id: String) -> int:
+	return equipped_trinkets.count(id)
+
+func heart_trinket_count() -> int:
+	return equipped_count("heart_charm")
+
+func gold_bonus_multiplier() -> float:
+	return 1.0 + 0.5 * equipped_count("gold_purse")
+
+func buy_trinket(id: String) -> bool:
+	if not TRINKETS.has(id):
+		return false
+	if trinket_count(id) >= int(TRINKETS[id]["max_owned"]):
+		return false
+	var cost: int = int(TRINKETS[id]["cost"])
+	if gold < cost:
+		return false
+	gold -= cost
+	owned_trinkets[id] = trinket_count(id) + 1
+	SaveManager.save_game(self)
+	return true
+
+func toggle_trinket_equip(id: String) -> bool:
+	if trinket_count(id) <= 0:
+		return false
+	if equipped_trinkets.has(id):
+		equipped_trinkets.erase(id)
+		SaveManager.save_game(self)
+		return true
+	if equipped_trinkets.size() >= MAX_TRINKET_SLOTS:
+		return false
+	if equipped_count(id) >= int(TRINKETS[id]["max_equipped"]):
+		return false
+	equipped_trinkets.append(id)
+	SaveManager.save_game(self)
+	return true
+
+## Called by TaskBase.fail() — consumes the Stone of Grace once per quest.
+func prepare_auto_complete() -> bool:
+	if equipped_trinkets.has("stone_of_grace") and not trinket_auto_used:
+		trinket_auto_used = true
+		return true
+	return false

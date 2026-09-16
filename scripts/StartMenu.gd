@@ -5,12 +5,14 @@ extends Control
 @onready var btn_exit: Button = $Center/Panel/VBox/BtnExit
 @onready var label_save: Label = $Center/Panel/VBox/SaveInfo
 @onready var btn_wipe: Button = $Center/Panel/VBox/BtnWipe
+@onready var btn_shop: Button = $Center/Panel/VBox/BtnShop
 
 func _ready() -> void:
 	btn_start.pressed.connect(_on_start)
 	btn_continue.pressed.connect(_on_continue)
 	btn_exit.pressed.connect(_on_exit)
 	btn_wipe.pressed.connect(_on_wipe)
+	btn_shop.pressed.connect(_on_shop)
 
 	var has_save := SaveManager.has_save()
 	btn_continue.disabled = not has_save
@@ -44,3 +46,7 @@ func _on_wipe() -> void:
 	GameManager.reset_progress()
 	label_save.text = "Progress wiped. New legend."
 	btn_continue.disabled = true
+
+func _on_shop() -> void:
+	GameManager.shop_return_scene = "res://scenes/StartMenu.tscn"
+	get_tree().change_scene_to_file("res://scenes/Shop.tscn")

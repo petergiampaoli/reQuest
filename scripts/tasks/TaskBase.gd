@@ -93,6 +93,13 @@ func succeed() -> void:
 func fail() -> void:
 	if _finished:
 		return
+	# Trinket: Stone of Grace — auto-completes a failure once per quest
+	if GameManager.prepare_auto_complete():
+		_finished = true
+		_timer.stop()
+		_show_result(true, "AUTO-COMPLETE!")
+		task_succeeded.emit(_time_left)
+		return
 	_finished = true
 	_timer.stop()
 	task_failed.emit()
@@ -125,11 +132,11 @@ func _on_tick() -> void:
 		# Time's up — auto-fail unless child already succeeded
 		fail()
 
-func _show_result(success: bool) -> void:
+func _show_result(success: bool, custom_text: String = "") -> void:
 	if _result_label == null:
 		return
 	_result_label.visible = true
-	_result_label.text = "SUCCESS!" if success else "FAILED!"
+	_result_label.text = custom_text if custom_text != "" else ("SUCCESS!" if success else "FAILED!")
 	_result_label.modulate = Color("#7cff7c") if success else Color("#ff4a4a")
 	_result_label.scale = Vector2(0.5, 0.5)
 	create_tween().tween_property(_result_label, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)

@@ -82,6 +82,12 @@ layout_mode = 2
 size_flags_horizontal = 4
 text = "⛺  Continue (Long Rest)"
 
+[node name="BtnShop" type="Button" parent="Center/Panel/VBox"]
+custom_minimum_size = Vector2(320, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "🧿  Trinket Shop"
+
 [node name="SaveInfo" type="Label" parent="Center/Panel/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12

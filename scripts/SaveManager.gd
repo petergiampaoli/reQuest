@@ -13,7 +13,9 @@ func save_game(gm: Node) -> void:
 		"total_tasks_completed": gm.total_tasks_completed,
 		"total_failures": gm.total_failures,
 		"upgrades": gm.upgrades,
-		"version": 2,
+		"owned_trinkets": gm.owned_trinkets,
+		"equipped_trinkets": gm.equipped_trinkets,
+		"version": 3,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -47,7 +49,16 @@ func load_game(gm: Node) -> void:
 		for k in gm.upgrades.keys():
 			if d["upgrades"].has(k):
 				gm.upgrades[k] = int(d["upgrades"][k])
-	print("[SaveManager] Loaded: quest %d, gold %d, lives %d, tasks %d" % [gm.quest_number, gm.gold, gm.lives, gm.total_tasks_completed])
+	if d.has("owned_trinkets") and d["owned_trinkets"] is Dictionary:
+		gm.owned_trinkets = {}
+		for k in d["owned_trinkets"].keys():
+			gm.owned_trinkets[k] = int(d["owned_trinkets"][k])
+	if d.has("equipped_trinkets") and d["equipped_trinkets"] is Array:
+		gm.equipped_trinkets.clear()
+		for id in d["equipped_trinkets"]:
+			if gm.owned_trinkets.get(id, 0) > 0 and not gm.equipped_trinkets.has(id):
+				gm.equipped_trinkets.append(str(id))
+	print("[SaveManager] Loaded: quest %d, gold %d, lives %d, tasks %d, trinkets %s" % [gm.quest_number, gm.gold, gm.lives, gm.total_tasks_completed, str(gm.equipped_trinkets)])
 
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)

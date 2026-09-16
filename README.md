@@ -25,14 +25,28 @@ StartMenu ──► Quest (10 tasks) ──► LongRest ──┐
 - Gold: `5 + upgrades + time_bonus` on win; lives `-1` on fail (3 lives, game over → wipe to menu).
 - Difficulty ramps `+0.12` per quest, modified by path choice at Long Rest.
 
+## Trinkets — `scripts/Shop.gd` + `GameManager.gd`
+Reachable via **🧿 Trinket Shop** from Start Menu or Long Rest. Buy once per trinket (permanent, saved); equip up to 3 (`MAX_TRINKET_SLOTS`, toggled in shop):
+
+| Trinket | Cost | Effect |
+|---|---|---|
+| 🧿 Heart Charm (`heart_charm`) | 60 | Quest starts with **3 + charm count** lives (max 1) |
+| 👛 Golden Purse (`gold_purse`) | 45 | **+50% gold** per task win, stacks (max 2) |
+| 🪨 Stone of Grace (`stone_of_grace`) | 90 | **Auto-completes** the next failed task, once per quest (max 1) |
+
+- Gold purses multiply the win bonus: `int((5 + upgrades + time_bonus) * 1.5^purses)`.
+- Stone of Grace shows **"AUTO-COMPLETE!"** and counts as a success instead of costing a heart; the flag resets each quest (`start_new_quest()`).
+- Trinket purchases + loadouts persist via `SaveManager` (save format v3).
+
 ## Project structure
 ```
 reQuest/
   project.godot          # autoloads: SaveManager → GameManager → TaskManager
   assets/icon.svg        # shield/Q woodcut icon
   scenes/
-    StartMenu.tscn       # Begin Quest / Continue / Wipe / Save & Exit
-    LongRest.tscn        # Camp — save, picks path (Forest/Crypt/Tower), buys upgrades
+    StartMenu.tscn       # Begin Quest / Continue / Shop / Wipe / Save & Exit
+    LongRest.tscn        # Camp — save, picks path (Forest/Crypt/Tower), buys upgrades, Shop
+    Shop.tscn            # Trinket shop — buy/equip trinkets with gold
     TaskBase.tscn        # Base HUD: CommandLabel, QuestProgress, GoldLabel, TimerBar, ResultLabel
     tasks/
       MashTask.tscn      # [mash]  HAMMER THE ANVIL! — mash F/X
@@ -46,9 +60,10 @@ reQuest/
       ChantTask.tscn     # [memory] CHANT! — Simon WASD/Arrows sequence
       BalanceTask.tscn   # [balance] DON'T SPILL! — tilt tray A/D
   scripts/
-    GameManager.gd       # quest state, gold/lives, difficulty, upgrades
+    GameManager.gd       # quest state, gold/lives, difficulty, upgrades, trinkets
     SaveManager.gd       # user://request_save.json (only at Long Rest / exit)
     TaskManager.gd       # shuffles task_pool (10) → queue of 10, instantiates next
+    Shop.gd              # trinket shop UI (buy/toggle equip; back via shop_return_scene)
     tasks/
       TaskBase.gd        # class_name TaskBase — timer, succeed()/fail(), signals
       MashTask.gd etc. (10 tasks)

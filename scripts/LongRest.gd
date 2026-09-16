@@ -7,6 +7,7 @@ extends Control
 @onready var btn_quest_forest: Button = $Center/Panel/VBox/RowPaths/BtnForest
 @onready var btn_quest_crypt: Button = $Center/Panel/VBox/RowPaths/BtnCrypt
 @onready var btn_quest_tower: Button = $Center/Panel/VBox/RowPaths/BtnTower
+@onready var btn_shop: Button = $Center/Panel/VBox/RowSave/BtnShop
 @onready var upgrade_container: VBoxContainer = $Center/Panel/VBox/Upgrades
 
 func _ready() -> void:
@@ -15,9 +16,11 @@ func _ready() -> void:
 	btn_quest_forest.pressed.connect(func(): _start_path("forest"))
 	btn_quest_crypt.pressed.connect(func(): _start_path("crypt"))
 	btn_quest_tower.pressed.connect(func(): _start_path("tower"))
+	btn_shop.pressed.connect(_on_shop)
 
 	_refresh()
 	_build_upgrades()
+	_show_trinkets()
 
 func _refresh() -> void:
 	lbl_stats.text = "LONG REST — Quest %d complete  |  %d/%d this quest  |  Gold %d  |  Lives %d" % [
@@ -54,6 +57,18 @@ func _on_save() -> void:
 func _on_exit() -> void:
 	SaveManager.save_game(GameManager)
 	get_tree().change_scene_to_file("res://scenes/StartMenu.tscn")
+
+func _on_shop() -> void:
+	GameManager.shop_return_scene = "res://scenes/LongRest.tscn"
+	get_tree().change_scene_to_file("res://scenes/Shop.tscn")
+
+func _show_trinkets() -> void:
+	var names: Array[String] = []
+	for id in GameManager.equipped_trinkets:
+		var def: Dictionary = GameManager.TRINKETS.get(id, {})
+		names.append("🧿 %s" % def.get("name", id))
+	var lbl: Label = $Center/Panel/VBox/TrinketStatus
+	lbl.text = "Equipped trinkets: %s" % ("none" if names.is_empty() else "  •  ".join(names))
 
 func _start_path(path: String) -> void:
 	# Path choice modifies next quest difficulty / flavor (stub — extend with TaskManager filters)
