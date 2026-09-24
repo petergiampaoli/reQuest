@@ -2,7 +2,7 @@ extends TaskBase
 ## TEMPLATE — copy this to create a new micro-task.
 ## 1. Duplicate scenes/TaskBase.tscn
 ## 2. Attach this script (renamed)
-## 3. Add to TaskManager.task_pool
+## 3. Add to TaskManager.TASKS catalog (id, name, scene, rank)
 
 func _ready() -> void:
 	command_text = "YOUR COMMAND HERE!"

@@ -91,6 +91,7 @@ func start_new_quest() -> void:
 	# slight ramp each quest
 	difficulty = 1.0 + (quest_number - 1) * 0.12
 	quest_started.emit()
+	TaskManager.begin_quest()
 	TaskManager.start_next_task()
 
 func on_task_finished(success: bool, time_left: float) -> void:

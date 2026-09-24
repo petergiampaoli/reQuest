@@ -20,7 +20,9 @@ StartMenu ──► Quest (10 tasks) ──► LongRest ──┐
    Save & Exit only safe at StartMenu / LongRest
 ```
 - `TASKS_PER_QUEST = 10` (`GameManager.gd:15`)
-- Each task is its **own scene** (`scenes/tasks/*.tscn`) with a `command_text` ("HAMMER THE ANVIL!", "DODGE!", etc.)
+- Tasks live in a **ranked catalog array** (`TaskManager.gd`) — each entry: `{"id", "name", "scene", "rank"}`. Add new tasks there and the quest randomizer picks them up.
+- At quest start, `TaskManager.begin_quest()` **randomly assigns** 10 tasks from your currently unlocked ranks. Rank 1 is free; each completed quest (10 tasks completed) unlocks the next rank — the more you play, the more tasks enter the pool.
+- Each task is its **own scene** (`scenes/tasks/*.tscn`) extending `TaskBase`, with a `command_text` ("HAMMER THE ANVIL!", "DODGE!", etc.)
 - Timer defaults to `10s / difficulty` + upgrade bonus, clamped 3–12s (`GameManager.gd:58`). Per-task override via `@export var task_time`.
 - Gold: `5 + upgrades + time_bonus` on win; lives `-1` on fail (3 lives, game over → wipe to menu).
 - Difficulty ramps `+0.12` per quest, modified by path choice at Long Rest.
@@ -62,7 +64,7 @@ reQuest/
   scripts/
     GameManager.gd       # quest state, gold/lives, difficulty, upgrades, trinkets
     SaveManager.gd       # user://request_save.json (only at Long Rest / exit)
-    TaskManager.gd       # shuffles task_pool (10) → queue of 10, instantiates next
+    TaskManager.gd       # TASKS catalog (ranked), begin_quest() randomizer → queue of 10
     Shop.gd              # trinket shop UI (buy/toggle equip; back via shop_return_scene)
     tasks/
       TaskBase.gd        # class_name TaskBase — timer, succeed()/fail(), signals
@@ -90,7 +92,7 @@ All tasks use these; add new actions in `project.godot` → map in your task's `
        # per-frame logic; call succeed() or fail() when decided
        pass
    ```
-3. Register it in `TaskManager.gd:9` → `task_pool` array.
+3. Add it to the `TASKS` catalog array in `TaskManager.gd` with its `rank`.
 4. Keep it under ~10s; call `succeed()` for win, `fail()` or let timer run out for loss.
 
 `task_time` export lets you extend/shorten per design ("This game will ... have a standard 10 second play time that could be extended or shortened." — prompt spec).
