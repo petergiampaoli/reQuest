@@ -61,6 +61,16 @@ reQuest/
       SealTask.tscn      # [drag]  SEAL IT! — drag stamp to letter
       ChantTask.tscn     # [memory] CHANT! — Simon WASD/Arrows sequence
       BalanceTask.tscn   # [balance] DON'T SPILL! — tilt tray A/D
+      RideTask.tscn      # [rank2]  RIDE! — A/D steer + F jump (dodge rocks, jump fences)
+      CrankTask.tscn     # [rank2]  CRANK IT! — hold A/D spin the winch + F on the gold
+      SpinTask.tscn      # [rank2]  SPIN THE WHEEL! — hold A/D keep it spinning + SPACE to mold
+      TightWireTask.tscn # [rank2]  TIGHT-WIRE! — A/D balance + SPACE to step
+      SmithTask.tscn     # [rank2]  FUEL THE FIRE! — F pump the bellows + A/D forge on the glow
+      StompTask.tscn     # [rank2]  STOMP! — A/D position + F stomp the burst
+      RowTask.tscn       # [rank2]  ROW! — A/D steer + F to row through river gates
+      ShoveTask.tscn     # [rank2]  SHOVE! — hold W push the boulder + SPACE kick debris
+      CannonTask.tscn    # [rank2]  MAN THE CANNON! — A/D aim + hold SPACE charge + F fire
+      SweepTask.tscn     # [rank2]  SWEEP! — hold SPACE sweep + A/D move the broom
   scripts/
     GameManager.gd       # quest state, gold/lives, difficulty, upgrades, trinkets
     SaveManager.gd       # user://request_save.json (only at Long Rest / exit)

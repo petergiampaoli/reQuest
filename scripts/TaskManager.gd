@@ -19,6 +19,17 @@ const TASKS: Array = [
 	{"id": "seal",     "name": "SEAL",     "scene": "res://scenes/tasks/SealTask.tscn",     "rank": 1},
 	{"id": "chant",    "name": "CHANT",    "scene": "res://scenes/tasks/ChantTask.tscn",    "rank": 1},
 	{"id": "balance",  "name": "BALANCE",  "scene": "res://scenes/tasks/BalanceTask.tscn",  "rank": 1},
+	# Rank 2 — dual-gesture tasks (two inputs at the same time)
+	{"id": "ride",     "name": "RIDE",     "scene": "res://scenes/tasks/RideTask.tscn",     "rank": 2},
+	{"id": "crank",    "name": "CRANK",    "scene": "res://scenes/tasks/CrankTask.tscn",    "rank": 2},
+	{"id": "spin",     "name": "SPIN",     "scene": "res://scenes/tasks/SpinTask.tscn",     "rank": 2},
+	{"id": "tightwire","name": "TIGHT-WIRE","scene": "res://scenes/tasks/TightWireTask.tscn","rank": 2},
+	{"id": "smith",    "name": "SMITH",    "scene": "res://scenes/tasks/SmithTask.tscn",    "rank": 2},
+	{"id": "stomp",    "name": "STOMP",    "scene": "res://scenes/tasks/StompTask.tscn",    "rank": 2},
+	{"id": "row",      "name": "ROW",      "scene": "res://scenes/tasks/RowTask.tscn",      "rank": 2},
+	{"id": "shove",    "name": "SHOVE",    "scene": "res://scenes/tasks/ShoveTask.tscn",    "rank": 2},
+	{"id": "cannon",   "name": "CANNON",   "scene": "res://scenes/tasks/CannonTask.tscn",   "rank": 2},
+	{"id": "sweep",    "name": "SWEEP",    "scene": "res://scenes/tasks/SweepTask.tscn",    "rank": 2},
 ]
 
 var _quest_queue: Array[String] = []
