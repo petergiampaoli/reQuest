@@ -18,13 +18,15 @@ var lives: int = 3:
 		lives = v
 		lives_changed.emit(lives)
 
-# Quest = 10 micro-tasks then Long Rest
+# Quest = 10 micro-tasks then a BOSS fight, then Long Rest
 const TASKS_PER_QUEST: int = 10
 var current_task_index: int = 0  # 0..9 within current quest
-var quest_number: int = 1        # increments after each Long Rest
+var quest_number: int = 1        # increments after each boss is slain (next difficulty)
+var boss_phase: bool = false     # true while the end-of-quest boss is up
+var bosses_defeated: int = 0     # lifetime bosses slain (persisted)
 var successes_this_quest: int = 0
 var total_successes: int = 0
-var total_tasks_completed: int = 0  # counts both success + fail across run
+var total_tasks_completed: int = 0  # counts both success + fail across run (boss included)
 var total_failures: int = 0
 var difficulty: float = 1.0      # scales timer down / speed up
 
@@ -33,10 +35,15 @@ var last_run_stats: Dictionary = {}
 
 # Upgrade state (spent at Long Rest)
 var upgrades: Dictionary = {
-	"extra_time": 0,  # +0.5s per level
+	"extra_time": 0,   # +0.5s per level
 	"extra_life": 0,
-	"gold_bonus": 0,  # +1 gold per task win per level
+	"gold_bonus": 0,   # +1 gold per task win per level
+	"quick_hands": 0,  # +1 to each MASH press's value (gesture augmentation)
 }
+
+# Gesture augmentation API — feeds TaskBase's gesture value system (gesture_performed).
+# Any system (upgrade, trinket, difficulty) can AUGMENT how much a gesture press is worth.
+var gesture_augments: Dictionary = {}  # id -> bonus per activation (ad-hoc, e.g. trinkets)
 
 # Trinkets — bought at the shop (Long Rest / Start Menu). Equipped in slots, effects per quest.
 var owned_trinkets: Dictionary = {}        # id -> count
@@ -50,6 +57,7 @@ const UPGRADE_COSTS := {
 	"extra_time": 15,
 	"extra_life": 25,
 	"gold_bonus": 20,
+	"quick_hands": 40,
 }
 const MAX_TRINKET_SLOTS: int = 3
 
@@ -84,6 +92,7 @@ func _ready() -> void:
 func start_new_quest() -> void:
 	current_task_index = 0
 	successes_this_quest = 0
+	boss_phase = false
 	trinket_auto_used = false
 	# Heart Charm: restore to full hearts + extra per charm equipped
 	if heart_trinket_count() > 0:
@@ -97,7 +106,6 @@ func start_new_quest() -> void:
 func on_task_finished(success: bool, time_left: float) -> void:
 	total_tasks_completed += 1
 	if success:
-		successes_this_quest += 1
 		total_successes += 1
 		var bonus: int = 5 + upgrades["gold_bonus"] * 2
 		# speed bonus: leftover time
@@ -112,15 +120,33 @@ func on_task_finished(success: bool, time_left: float) -> void:
 			_game_over()
 			return
 
+	# A boss result routes the whole quest: slay it → next difficulty; fail it → retry.
+	if boss_phase:
+		on_boss_finished(success)
+		return
+
+	successes_this_quest += 1
 	current_task_index += 1
 
 	if current_task_index >= TASKS_PER_QUEST:
+		# 10 tasks done — the boss is waiting.
+		TaskManager.start_boss()
+	else:
+		TaskManager.start_next_task()
+
+## Boss outcome decides the quest's fate.
+## Defeated → quest complete, next quest runs at the next difficulty (rank up).
+## Failed → the player already lost a heart; must retry the boss to advance.
+func on_boss_finished(success: bool) -> void:
+	if success:
+		boss_phase = false
+		bosses_defeated += 1
 		quest_completed.emit(successes_this_quest, TASKS_PER_QUEST)
-		quest_number += 1
+		quest_number += 1  # next quest = next difficulty
 		SaveManager.save_game(self)
 		get_tree().change_scene_to_file("res://scenes/LongRest.tscn")
 	else:
-		TaskManager.start_next_task()
+		TaskManager.start_boss()
 
 func _game_over() -> void:
 	# Snapshot stats BEFORE reset — GameOver screen reads this
@@ -135,11 +161,13 @@ func _game_over() -> void:
 		"gold": gold,
 		"quest_reached": quest_number,
 		"tasks_in_final_quest": current_task_index + 1, # include the failing one
+		"bosses_defeated": bosses_defeated,
 	}
 	# Reset but keep gold / upgrades for roguelite feel — adjust if you want hard reset
 	lives = 3
 	quest_number = 1
 	current_task_index = 0
+	boss_phase = false
 	successes_this_quest = 0
 	difficulty = 1.0
 	SaveManager.save_game(self)
@@ -169,13 +197,16 @@ func reset_progress() -> void:
 	lives = 3
 	quest_number = 1
 	current_task_index = 0
+	boss_phase = false
+	bosses_defeated = 0
 	successes_this_quest = 0
 	total_successes = 0
 	total_tasks_completed = 0
 	total_failures = 0
 	last_run_stats = {}
 	difficulty = 1.0
-	upgrades = {"extra_time": 0, "extra_life": 0, "gold_bonus": 0}
+	upgrades = {"extra_time": 0, "extra_life": 0, "gold_bonus": 0, "quick_hands": 0}
+	gesture_augments = {}
 	owned_trinkets = {}
 	equipped_trinkets = []
 	trinket_auto_used = false
@@ -228,3 +259,17 @@ func prepare_auto_complete() -> bool:
 		trinket_auto_used = true
 		return true
 	return false
+
+# --- Gesture value system (TaskBase reads this at every task start) ---
+
+## Bonus this gesture is worth per activation. Upgrade/trinket-derived
+## augmentations add to any ad-hoc ones set via set_gesture_augment().
+func get_gesture_augment(id: String) -> int:
+	var bonus: int = int(gesture_augments.get(id, 0))
+	if id == "mash":
+		bonus += int(upgrades.get("quick_hands", 0))
+	return bonus
+
+## Set an ad-hoc augmentation for a gesture (e.g. a trinket that boosts action presses).
+func set_gesture_augment(id: String, bonus: int) -> void:
+	gesture_augments[id] = maxi(bonus, 0)

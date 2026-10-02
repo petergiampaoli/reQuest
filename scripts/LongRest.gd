@@ -23,8 +23,9 @@ func _ready() -> void:
 	_show_trinkets()
 
 func _refresh() -> void:
-	lbl_stats.text = "LONG REST — Quest %d complete  |  %d/%d this quest  |  Gold %d  |  Lives %d" % [
-		GameManager.quest_number - 1, GameManager.successes_this_quest, GameManager.TASKS_PER_QUEST, GameManager.gold, GameManager.lives
+	var next_diff: float = 1.0 + GameManager.quest_number * 0.12
+	lbl_stats.text = "LONG REST — Quest %d complete, BOSS SLAIN  |  %d/%d quests  |  Gold %d  |  Lives %d  |  Bosses: %d\nNext quest starts at Difficulty %.2f" % [
+		GameManager.quest_number - 1, GameManager.successes_this_quest, GameManager.TASKS_PER_QUEST, GameManager.gold, GameManager.lives, GameManager.bosses_defeated, next_diff
 	]
 
 func _build_upgrades() -> void:

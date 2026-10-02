@@ -29,6 +29,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	var dir := Input.get_axis("move_left", "move_right")
 	player_x += dir * 400.0 * delta
 	player_x = clampf(player_x, 200.0, 1040.0)
@@ -56,6 +57,7 @@ func on_task_tick(delta: float) -> void:
 
 	# Stomp check
 	if Input.is_action_just_pressed("mash"):
+		gesture_performed("mash")
 		for v in _vines:
 			if v["stage"] == 1 and absf(SLOTS[v["slot"]] - player_x) < 60.0:
 				kills += 1

@@ -34,6 +34,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	# Move target, bounce
 	target_pos += target_vel * delta
 	if target_pos.x < 180 or target_pos.x > 1100:
@@ -72,9 +73,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _finished or has_shot:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		gesture_performed("click")
 		_shoot()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("action"):
+		gesture_performed("action")
 		_shoot()
 		get_viewport().set_input_as_handled()
 

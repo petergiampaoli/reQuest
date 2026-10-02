@@ -26,6 +26,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	if Input.is_action_pressed("move_left") or Input.is_action_pressed("move_right"):
 		spin += 3.2 * delta
 		cold_time = 0.0
@@ -41,6 +42,7 @@ func on_task_tick(delta: float) -> void:
 		lumps[i] = fposmod(lumps[i] + spin * delta, TAU)
 
 	if Input.is_action_just_pressed("action"):
+		gesture_performed("action")
 		for i in lumps.size():
 			if absf(_norm_angle(lumps[i])) < 0.30:
 				lumps[i] = randf() * TAU

@@ -1,9 +1,9 @@
 # reQuest — WarioWare-style Micro-Quest Game (Godot 4)
 
-Medieval punk micro-quests. 10 tasks. ~10 seconds each. Then **Long Rest**.
+Medieval punk micro-quests. 10 tasks. ~10 seconds each. Then a **BOSS fight**. Then **Long Rest**.
 
 ## Pitch
-Inspired by WarioWare's cadence + medieval woodcut (Baker-era ink, graffiti, distressed print) mixed with modern grit. You **hit Start → quest (10 micro-tasks back-to-back) → Long Rest (camp)** where you can save/exit safely, choose the next path, and spend gold on upgrades.
+Inspired by WarioWare's cadence + medieval woodcut (Baker-era ink, graffiti, distressed print) mixed with modern grit. You **hit Start → quest (10 micro-tasks back-to-back) → BOSS → Long Rest (camp)** where you can save/exit safely, choose the next path, and spend gold on upgrades. Quests are **endless** — every boss you slay pushes the next quest to a higher difficulty and unlocks another rank of tasks.
 
 ## How to run
 - Requires **Godot 4.2+** (tested 4.7, `gl_compatibility` for Mac).
@@ -14,18 +14,38 @@ Inspired by WarioWare's cadence + medieval woodcut (Baker-era ink, graffiti, dis
 
 ## Gameplay loop — `scripts/GameManager.gd:1`
 ```
-StartMenu ──► Quest (10 tasks) ──► LongRest ──┐
-   ▲                                         │
-   └─────────────────────────────────────────┘
+StartMenu ──► Quest (10 tasks) ──► BOSS ──► LongRest ──► next Quest (harder) ──┬─► endless
+   ▲                                               │                           │
+   └───────────────────────────────────────────────┘                           │
+   Boss failed → lose a heart, retry the boss (must die to advance)  ───────────┘
    Save & Exit only safe at StartMenu / LongRest
 ```
 - `TASKS_PER_QUEST = 10` (`GameManager.gd:15`)
+- Each quest is a **`Quest`** (`scripts/Quest.gd`) — a model holding `number`, `difficulty`, an **array of task scene paths** (`Quest.tasks`), and the boss scene (`Quest.boss_scene`), built by `TaskManager.begin_quest()`.
 - Tasks live in a **ranked catalog array** (`TaskManager.gd`) — each entry: `{"id", "name", "scene", "rank"}`. Add new tasks there and the quest randomizer picks them up.
-- At quest start, `TaskManager.begin_quest()` **randomly assigns** 10 tasks from your currently unlocked ranks. Rank 1 is free; each completed quest (10 tasks completed) unlocks the next rank — the more you play, the more tasks enter the pool.
+- At quest start, `TaskManager.begin_quest()` **randomly assigns** 10 tasks from your currently unlocked ranks into `Quest.tasks`. Rank 1 is free; each completed quest unlocks the next rank — the more you play, the more tasks enter the pool.
 - Each task is its **own scene** (`scenes/tasks/*.tscn`) extending `TaskBase`, with a `command_text` ("HAMMER THE ANVIL!", "DODGE!", etc.)
+- After the 10th task, `TaskManager.start_boss()` loads the **BossTask** (`scenes/tasks/BossTask.tscn`).
 - Timer defaults to `10s / difficulty` + upgrade bonus, clamped 3–12s (`GameManager.gd:58`). Per-task override via `@export var task_time`.
 - Gold: `5 + upgrades + time_bonus` on win; lives `-1` on fail (3 lives, game over → wipe to menu).
-- Difficulty ramps `+0.12` per quest, modified by path choice at Long Rest.
+- Difficulty ramps `+0.12` per quest (`difficulty = 1 + (quest_number-1) * 0.12`), modified by path choice at Long Rest.
+
+## Boss — `scenes/tasks/BossTask.tscn` + `TaskBase`
+```
+QUEST ──► [10 tasks] ──► BOSS: THE WARDEN ──► slain → quest complete → Difficulty +0.12
+                                              └─► failed → -1 ♥ → retry the boss (gate)
+```
+- The boss is a **quest-like challenge double the work in the same time**: it needs `2 × (18 + 6·difficulty)` hits in the same ~10s window as a normal task, and switches between demanding **MASH [F]** and **STOMP [Space]** so you work both hands at once.
+- A **health bar** shows the doubled goal; the boss **counters** if you stall >1.4s without landing a hit.
+- Defeating the boss completes the quest → `quest_number++` → the **next quest is the next difficulty** (and unlocks the next task rank). Endless.
+- Failing the boss costs a heart like any task; with hearts left you **retry the boss** — it must die to advance.
+
+## Gesture value system — `scripts/tasks/TaskBase.gd`
+Every task gesture has a **named value counter** that tracks how many times the player performed it, and that value **can be augmented**:
+- **Counters:** `gesture_performed("mash")` records one press → `gesture_count("mash")` reads it. Each gesture (`mash`, `action`, `move_left/right/up/down`, `click`, `drag`) has its own counter, reset each task.
+- **Augmentation:** `gesture_performed()` adds `amount + augmentation_bonus` per press. Augmentations come from `GameManager.get_gesture_augment(id)` — the **Quick Hands** upgrade boosts MASH (`+1` value per press per level, so each physical press counts double/triple), and `GameManager.set_gesture_augment("action", n)` lets trinkets/future systems boost any gesture.
+- **In play:** MashTask/SortTask/RowTask/BossTask all drive their progress off `gesture_count()`, so augmenting a gesture measurably accelerates the task.
+- **Movement keys:** `track_movement()` counts discrete presses of the 4 move axes — call it in `on_task_tick()` (already done in every task).
 
 ## Trinkets — `scripts/Shop.gd` + `GameManager.gd`
 Reachable via **🧿 Trinket Shop** from Start Menu or Long Rest. Buy once per trinket (permanent, saved); equip up to 3 (`MAX_TRINKET_SLOTS`, toggled in shop):
@@ -51,6 +71,7 @@ reQuest/
     Shop.tscn            # Trinket shop — buy/equip trinkets with gold
     TaskBase.tscn        # Base HUD: CommandLabel, QuestProgress, GoldLabel, TimerBar, ResultLabel
     tasks/
+      BossTask.tscn      # [boss]    SLAY THE WARDEN! — 2x work, same time, alternate MASH/STOMP
       MashTask.tscn      # [mash]  HAMMER THE ANVIL! — mash F/X
       DodgeTask.tscn     # [move]  DODGE! — WASD survive barrels
       ParryTask.tscn     # [timing] PARRY! — space in gold zone
@@ -72,12 +93,14 @@ reQuest/
       CannonTask.tscn    # [rank2]  MAN THE CANNON! — A/D aim + hold SPACE charge + F fire
       SweepTask.tscn     # [rank2]  SWEEP! — hold SPACE sweep + A/D move the broom
   scripts/
-    GameManager.gd       # quest state, gold/lives, difficulty, upgrades, trinkets
+    GameManager.gd       # quest state, gold/lives, difficulty, upgrades, trinkets, boss routing
     SaveManager.gd       # user://request_save.json (only at Long Rest / exit)
-    TaskManager.gd       # TASKS catalog (ranked), begin_quest() randomizer → queue of 10
+    TaskManager.gd       # TASKS catalog (ranked), begin_quest() → Quest, start_boss()
+    Quest.gd             # Quest model — number, difficulty, array of tasks, boss_scene
     Shop.gd              # trinket shop UI (buy/toggle equip; back via shop_return_scene)
     tasks/
       TaskBase.gd        # class_name TaskBase — timer, succeed()/fail(), signals
+      BossTask.gd        # end-of-quest boss — double the work, same time
       MashTask.gd etc. (10 tasks)
 ```
 
@@ -100,10 +123,15 @@ All tasks use these; add new actions in `project.godot` → map in your task's `
        pass
    func on_task_tick(delta: float):
        # per-frame logic; call succeed() or fail() when decided
+       track_movement()              # counts WASD/arrow presses
        pass
+   # In your input handler, route presses through the gesture value system:
+   #   gesture_performed("mash")     # record one press (+ any augmentation)
+   #   gesture_count("mash")         # read total this task
    ```
 3. Add it to the `TASKS` catalog array in `TaskManager.gd` with its `rank`.
 4. Keep it under ~10s; call `succeed()` for win, `fail()` or let timer run out for loss.
+5. Any gesture you perform is aug-able via `GameManager.set_gesture_augment(id, bonus)`.
 
 `task_time` export lets you extend/shorten per design ("This game will ... have a standard 10 second play time that could be extended or shortened." — prompt spec).
 

@@ -36,6 +36,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	# Input: vector from center, OR mouse position
 	var input_vec: Vector2 = Vector2.ZERO
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -47,6 +48,7 @@ func on_task_tick(delta: float) -> void:
 		var mp := get_viewport().get_mouse_position()
 		if mp.distance_to(center) < 220 and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			pos = center + (mp - center).normalized() * 90.0
+			gesture_performed("drag")
 
 	var vec := pos - center
 	angle = atan2(vec.y, vec.x)

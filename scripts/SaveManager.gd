@@ -12,6 +12,7 @@ func save_game(gm: Node) -> void:
 		"total_successes": gm.total_successes,
 		"total_tasks_completed": gm.total_tasks_completed,
 		"total_failures": gm.total_failures,
+		"bosses_defeated": gm.bosses_defeated,
 		"upgrades": gm.upgrades,
 		"owned_trinkets": gm.owned_trinkets,
 		"equipped_trinkets": gm.equipped_trinkets,
@@ -45,10 +46,13 @@ func load_game(gm: Node) -> void:
 	gm.total_successes = int(d.get("total_successes", 0))
 	gm.total_tasks_completed = int(d.get("total_tasks_completed", gm.total_successes + int(d.get("total_failures", 0))))
 	gm.total_failures = int(d.get("total_failures", 0))
+	gm.bosses_defeated = int(d.get("bosses_defeated", 0))
 	if d.has("upgrades") and d["upgrades"] is Dictionary:
 		for k in gm.upgrades.keys():
 			if d["upgrades"].has(k):
 				gm.upgrades[k] = int(d["upgrades"][k])
+	if not gm.upgrades.has("quick_hands"):
+		gm.upgrades["quick_hands"] = 0
 	if d.has("owned_trinkets") and d["owned_trinkets"] is Dictionary:
 		gm.owned_trinkets = {}
 		for k in d["owned_trinkets"].keys():

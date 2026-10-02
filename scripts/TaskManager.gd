@@ -1,8 +1,13 @@
 extends Node
 ## TaskManager — owns the quest sequence and instantiates task scenes.
 ## Each task is its own scene that extends TaskBase (scripts/tasks/TaskBase.gd).
+## A quest is a Quest (array of task scenes) followed by a boss fight.
 
 signal task_will_start(task_name: String, index: int, total: int)
+
+## The boss that ends every quest.
+const BOSS_SCENE := "res://scenes/tasks/BossTask.tscn"
+const BOSS_NAME := "THE WARDEN"
 
 # Task catalog — single source of truth.
 # Each entry: id, name, scene, rank. Ranks gate availability:
@@ -32,43 +37,51 @@ const TASKS: Array = [
 	{"id": "sweep",    "name": "SWEEP",    "scene": "res://scenes/tasks/SweepTask.tscn",    "rank": 2},
 ]
 
-var _quest_queue: Array[String] = []
+var current_quest: Quest = null
 var _current_task: Node = null
 
-## Called at quest start — randomly assigns TASKS_PER_QUEST tasks from unlocked ranks.
+## Called at quest start — builds a Quest from TASKS_PER_QUEST tasks drawn from unlocked ranks.
 func begin_quest() -> void:
-	_quest_queue.clear()
-	_build_queue()
+	current_quest = Quest.new()
+	current_quest.number = GameManager.quest_number
+	current_quest.difficulty = GameManager.difficulty
+	current_quest.boss_scene = BOSS_SCENE
+	current_quest.tasks = _draw_tasks(GameManager.TASKS_PER_QUEST)
 
 func start_next_task() -> void:
-	# Build queue lazily as a fallback if begin_quest() wasn't called
-	if _quest_queue.is_empty():
-		_build_queue()
-
-	if _quest_queue.is_empty():
-		push_error("[TaskManager] No tasks unlocked!")
+	# Fallback: no quest in flight → treat the boss as the next step
+	if current_quest == null or current_quest.tasks.is_empty():
+		start_boss()
 		return
 
-	var path: String = _quest_queue.pop_front()
+	var path: String = current_quest.tasks.pop_front()
 	task_will_start.emit(path.get_file().get_basename(), GameManager.current_task_index + 1, GameManager.TASKS_PER_QUEST)
 	# Small inter-task beat — could add a "NEXT: ..." interstitial here
 	await get_tree().create_timer(0.35).timeout
 	get_tree().change_scene_to_file(path)
 
-func _build_queue() -> void:
+## Called after the last task succeeds — the boss awaits.
+## The boss is a TaskBase too, but GameManager routes its result to the boss flow.
+func start_boss() -> void:
+	GameManager.boss_phase = true
+	task_will_start.emit(BOSS_NAME, GameManager.TASKS_PER_QUEST + 1, GameManager.TASKS_PER_QUEST + 1)
+	get_tree().change_scene_to_file(BOSS_SCENE)
+
+## Draws `count` task scenes from the unlocked pool (ranks gate availability).
+func _draw_tasks(count: int) -> Array[String]:
 	var pool := unlocked_tasks()
 	if pool.is_empty():
 		push_error("[TaskManager] No unlocked tasks!")
-		return
+		return []
 	var scenes: Array[String] = []
 	for task in pool:
 		scenes.append(String(task["scene"]))
-	_quest_queue.clear()
-	while _quest_queue.size() < GameManager.TASKS_PER_QUEST:
+	var out: Array[String] = []
+	while out.size() < count:
 		var chunk := scenes.duplicate()
 		chunk.shuffle()
-		_quest_queue.append_array(chunk)
-	_quest_queue = _quest_queue.slice(0, GameManager.TASKS_PER_QUEST)
+		out.append_array(chunk)
+	return out.slice(0, count)
 
 ## Highest rank unlocked so far: rank 1 always; +1 per completed quest (10 tasks).
 func unlocked_max_rank() -> int:

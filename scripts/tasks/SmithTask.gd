@@ -50,9 +50,11 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	heat -= 26.0 * delta
 	if Input.is_action_just_pressed("mash"):
 		heat += 9.0
+		gesture_performed("mash")
 	heat = clampf(heat, 0.0, 100.0)
 
 	var dir := Input.get_axis("move_left", "move_right")

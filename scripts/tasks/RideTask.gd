@@ -28,12 +28,14 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	var dir := Input.get_axis("move_left", "move_right")
 	horse_x += dir * 340.0 * delta
 	horse_x = clampf(horse_x, 60.0, 1220.0)
 
 	if Input.is_action_just_pressed("mash"):
 		jump_left = JUMP_TIME
+		gesture_performed("mash")
 	jump_left = maxf(0.0, jump_left - delta)
 	var airborne: bool = jump_left > 0.0
 	_horse.position = Vector2(horse_x - 13.0, (520.0 - 46.0) if airborne else 520.0)

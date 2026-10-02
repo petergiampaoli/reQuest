@@ -48,6 +48,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("action"):
 		input_done = true
+		gesture_performed("action")
 		_check_parry()
 		get_viewport().set_input_as_handled()
 

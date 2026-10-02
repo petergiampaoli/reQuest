@@ -35,10 +35,13 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	var dir := Input.get_axis("move_left", "move_right")
 	broom_x += dir * 430.0 * delta
 	broom_x = clampf(broom_x, 120.0, 1160.0)
 
+	if Input.is_action_just_pressed("action"):
+		gesture_performed("action")
 	sweep_on = Input.is_action_pressed("action")
 
 	if _broom:

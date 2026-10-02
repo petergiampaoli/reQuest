@@ -22,6 +22,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	# Wobble + drift to the edges — keep fighting it
 	tilt += (randf() - 0.5) * 3.4 * delta + tilt * 0.18 * delta
 	if Input.is_action_pressed("move_left"):
@@ -36,6 +37,7 @@ func on_task_tick(delta: float) -> void:
 		return
 
 	if Input.is_action_just_pressed("action"):
+		gesture_performed("action")
 		step += 1
 		tilt *= 0.35
 		player_x = lerpf(180.0, 1100.0, float(step) / float(STEPS_NEEDED))

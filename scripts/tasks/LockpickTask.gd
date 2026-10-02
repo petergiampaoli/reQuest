@@ -33,6 +33,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	var dir := Input.get_axis("move_left", "move_right")
 	# Also accept A/D explicitly via same axis; add slight inertia
 	current_angle += dir * 95.0 * delta
@@ -60,6 +61,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _finished:
 		return
 	if event.is_action_pressed("action"):
+		gesture_performed("action")
 		var dist := absf(current_angle - sweet_angle)
 		if dist <= window_deg:
 			# success flash

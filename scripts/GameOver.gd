@@ -24,6 +24,7 @@ func _ready() -> void:
 			"gold": GameManager.gold,
 			"quest_reached": GameManager.quest_number,
 			"tasks_in_final_quest": GameManager.current_task_index,
+			"bosses_defeated": GameManager.bosses_defeated,
 		}
 
 	var tasks: int = int(s.get("total_tasks_completed", 0))
@@ -32,6 +33,7 @@ func _ready() -> void:
 	var quests: int = int(s.get("quests_cleared", 0))
 	var gold: int = int(s.get("gold", 0))
 	var q_reached: int = int(s.get("quest_reached", 1))
+	var bosses: int = int(s.get("bosses_defeated", 0))
 
 	# Title flavor based on performance
 	if tasks == 0:
@@ -52,7 +54,7 @@ func _ready() -> void:
 
 	# Main stats block — emphasize tasks completed as requested
 	var rate: float = (100.0 * succ / max(1, tasks)) if tasks > 0 else 0.0
-	stats.text = "Tasks Completed:  %d\nSucceeded:  %d  •  Failed:  %d  (%.0f%%)\nQuests Cleared: %d  (reached Quest %d)" % [tasks, succ, fail, rate, quests, q_reached]
+	stats.text = "Tasks Completed:  %d\nSucceeded:  %d  •  Failed:  %d  (%.0f%%)\nQuests Cleared: %d  (reached Quest %d)\nBosses Slain:  %d" % [tasks, succ, fail, rate, quests, q_reached, bosses]
 
 	detail.text = "Gold hoarded: %d  •  Total Tasks (lifetime): %d\n\nYour ♥ ran out. 3 hearts per run — fail a task, lose a heart." % [gold, GameManager.total_tasks_completed]
 

@@ -86,6 +86,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
+			gesture_performed("click")
 			# Start drag if on stamp
 			if stamp and Rect2(stamp.position, stamp.size).has_point(event.position):
 				dragging = true
@@ -103,7 +104,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		stamp_pos = event.position - stamp_grab_offset
 		if stamp:
 			stamp.position = stamp_pos - stamp.size / 2
+		gesture_performed("drag")
 	elif event.is_action_pressed("action") and not dragging:
+		gesture_performed("action")
 		# Controller press-to-seal: if stamp near zone
 		var zone_center: Vector2 = letter.position + Vector2(letter.size.x / 2, letter.size.y * 0.72) if letter else Vector2(640, 360)
 		if stamp_pos.distance_to(zone_center) < 52:

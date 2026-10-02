@@ -34,6 +34,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	var dir := Input.get_axis("move_left", "move_right")
 	boat_x += dir * 380.0 * delta
 	boat_x = clampf(boat_x, 140.0, 1140.0)
@@ -43,7 +44,8 @@ func on_task_tick(delta: float) -> void:
 		_boat_rect.position = Vector2(boat_x - 30.0, boat_y - 13.0)
 
 	if Input.is_action_just_pressed("mash"):
-		strokes += 1
+		gesture_performed("mash")
+		strokes = gesture_count("mash")
 		var label: Label = get_node_or_null("CanvasLayer/ProgressLabel")
 		if not label:
 			label = _add_progress_label()

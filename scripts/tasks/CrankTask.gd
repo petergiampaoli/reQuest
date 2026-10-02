@@ -26,6 +26,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	var dir := Input.get_axis("move_left", "move_right")
 	if dir != 0.0:
 		needles = dir * SPIN_SPEED
@@ -48,6 +49,7 @@ func on_task_tick(delta: float) -> void:
 		label = _add_progress_label()
 
 	if Input.is_action_just_pressed("mash") and hot:
+		gesture_performed("mash")
 		catches += 1
 		target_angle = randf() * TAU
 		label.text = "%d/%d" % [catches, NEED_REPEAT_CATCHES]

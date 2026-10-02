@@ -27,6 +27,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 
 	# Movement
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")

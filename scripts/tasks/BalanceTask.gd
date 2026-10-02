@@ -32,6 +32,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	# Tilt input
 	var dir := Input.get_axis("move_left", "move_right")
 	# Mouse also controls tilt if held

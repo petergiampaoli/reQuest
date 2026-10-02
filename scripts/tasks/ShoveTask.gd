@@ -30,6 +30,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	# Push / rollback
 	if Input.is_action_pressed("move_up"):
 		boulder_x += 150.0 * delta
@@ -48,6 +49,7 @@ func on_task_tick(delta: float) -> void:
 	kick_cd = maxf(0.0, kick_cd - delta)
 	if Input.is_action_just_pressed("action") and kick_cd <= 0.0:
 		kick_cd = 0.16
+		gesture_performed("action")
 		_kick_nearest()
 
 	var drop: Array = []

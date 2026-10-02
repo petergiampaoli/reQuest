@@ -48,6 +48,7 @@ func on_task_start() -> void:
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
+	track_movement()
 	t += delta
 	var dir := Input.get_axis("move_left", "move_right")
 	barrel_angle += dir * 1.15 * delta
@@ -64,6 +65,8 @@ func on_task_tick(delta: float) -> void:
 
 	if Input.is_action_pressed("action"):
 		charge += 34.0 * delta
+		if Input.is_action_just_pressed("action"):
+			gesture_performed("action")
 		if not aligned:
 			charge -= 26.0 * delta  # leaks while off-target
 	else:
@@ -71,6 +74,7 @@ func on_task_tick(delta: float) -> void:
 	charge = clampf(charge, 0.0, 100.0)
 
 	if Input.is_action_just_pressed("mash"):
+		gesture_performed("mash")
 		if aligned and charge >= 75.0:
 			hits += 1
 			charge = 0.0

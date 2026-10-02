@@ -13,6 +13,7 @@ func _ready() -> void:
 	super._ready()
 
 func on_task_start() -> void:
+	clear_gesture_counts()
 	collected = 0
 	_spawn_coins(needed + 2) # extra decoys that don't count? Actually all count for simplicity
 	_update_counter()
@@ -31,7 +32,8 @@ func _spawn_coins(n: int) -> void:
 		coin.pressed.connect(func():
 			if _finished:
 				return
-			collected += 1
+			gesture_performed("click")
+			collected = gesture_count("click")
 			_update_counter()
 			coin.queue_free()
 			# Pop effect

@@ -16,6 +16,7 @@ func _ready() -> void:
 	super._ready()
 
 func on_task_start() -> void:
+	clear_gesture_counts()
 	count = 0
 	if bar:
 		bar.max_value = required
@@ -32,7 +33,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _on_mash() -> void:
-	count += 1
+	gesture_performed("mash")
+	count = gesture_count("mash")
 	if bar:
 		bar.value = count
 	# Anvil bump

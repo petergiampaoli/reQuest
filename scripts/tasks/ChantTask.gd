@@ -6,7 +6,7 @@ extends TaskBase
 var sequence: Array[int] = [] # 0..3
 var showing: bool = true
 var show_index: int = 0
-var show_timer: float = 0.0
+var show_t: float = 0.0
 var input_index: int = 0
 var seq_len: int = 4
 
@@ -26,7 +26,7 @@ func on_task_start() -> void:
 		sequence.append(randi() % 4)
 	showing = true
 	show_index = 0
-	show_timer = 0.45
+	show_t = 0.45
 	input_index = 0
 	runes = [$Rune0, $Rune1, $Rune2, $Rune3]
 	for r in runes:
@@ -50,8 +50,8 @@ func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
 	if showing:
-		show_timer -= delta
-		if show_timer <= 0:
+		show_t -= delta
+		if show_t <= 0:
 			# clear previous
 			if show_index > 0:
 				var prev: int = sequence[show_index - 1]
@@ -68,7 +68,7 @@ func on_task_tick(delta: float) -> void:
 					# ping
 					create_tween().tween_property(node, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK)
 				show_index += 1
-				show_timer = 0.55 if show_index < sequence.size() else 0.4
+				show_t = 0.55 if show_index < sequence.size() else 0.4
 			else:
 				# Done showing
 				showing = false
@@ -100,6 +100,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_A, KEY_LEFT: pressed = 3
 	if pressed == -1:
 		return
+	match pressed:
+		0: gesture_performed("move_up")
+		1: gesture_performed("move_right")
+		2: gesture_performed("move_down")
+		3: gesture_performed("move_left")
 	# Feedback
 	var node: Node = runes[pressed] if pressed < runes.size() else null
 	if node:

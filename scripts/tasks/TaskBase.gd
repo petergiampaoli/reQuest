@@ -10,6 +10,17 @@ signal task_failed
 @export var task_time: float = -1.0  # -1 = use GameManager.get_task_time()
 @export var show_timer: bool = true
 
+# --- Gesture value system ---
+# Every gesture (mash, action, move_*, click, ...) is a NAMED counter. Tasks record
+# an activation ONLY through gesture_performed(); gesture_count() reads the total.
+# Each activation adds `1 + augmentation bonus`, so external systems (the "Quick Hands"
+# upgrade, trinkets, difficulty) can AUGMENT how much each press is worth.
+const GESTURE_IDS: Array[String] = [
+	"mash", "action", "move_left", "move_right", "move_up", "move_down", "click", "drag",
+]
+var gesture_counts: Dictionary = {}      # gesture id -> total activations this task
+var gesture_augments: Dictionary = {}    # gesture id -> bonus added per activation
+
 var _time_left: float
 var _finished: bool = false
 var _timer: Timer
@@ -26,6 +37,9 @@ var _hearts_labels: Array[Label] = []
 func _ready() -> void:
 	# Register with TaskManager so it can forward results
 	TaskManager.register_task(self)
+
+	# Pull current gesture augmentations from GameManager (upgrades/trinkets/etc.)
+	apply_gesture_augments()
 
 	if task_time < 0:
 		task_time = GameManager.get_task_time()
@@ -63,7 +77,8 @@ func _ready() -> void:
 	add_child(_timer)
 	_timer.timeout.connect(_on_tick)
 
-	# Hook for child tasks
+	# Reset per-task counters, then hook for child tasks
+	clear_gesture_counts()
 	on_task_start()
 
 ## Override in child task
@@ -73,6 +88,53 @@ func on_task_start() -> void:
 ## Override — called every frame via _on_tick
 func on_task_tick(_delta: float) -> void:
 	pass
+
+# --- Gesture value system API ---
+
+## Record one activation of a gesture. Adds `amount` + the gesture's augmentation
+## bonus (if any) to its counter. Returns how much the counter gained.
+func gesture_performed(id: String, amount: int = 1) -> int:
+	if not gesture_counts.has(id):
+		gesture_counts[id] = 0
+	var gained: int = amount + int(gesture_augments.get(id, 0))
+	gesture_counts[id] = int(gesture_counts[id]) + gained
+	return gained
+
+## Read a gesture's running total (includes augmentation bonuses).
+func gesture_count(id: String) -> int:
+	return int(gesture_counts.get(id, 0))
+
+## Augment a gesture: every activation is now worth `bonus` extra.
+func set_gesture_augment(id: String, bonus: int) -> void:
+	gesture_augments[id] = maxi(bonus, 0)
+
+## Current augmentation for a gesture this task.
+func gesture_augment(id: String) -> int:
+	return int(gesture_augments.get(id, 0))
+
+## Load augments for every known gesture from GameManager before the task runs.
+func apply_gesture_augments() -> void:
+	gesture_augments.clear()
+	for id in GESTURE_IDS:
+		var bonus: int = GameManager.get_gesture_augment(id)
+		if bonus > 0:
+			gesture_augments[id] = bonus
+
+## Reset all counters — child tasks call this at the top of on_task_start().
+func clear_gesture_counts() -> void:
+	gesture_counts.clear()
+
+## Count discrete movement-key presses (move_left/right/up/down just_pressed).
+## Call from on_task_tick() in movement-based tasks.
+func track_movement() -> void:
+	if Input.is_action_just_pressed("move_left"):
+		gesture_performed("move_left")
+	if Input.is_action_just_pressed("move_right"):
+		gesture_performed("move_right")
+	if Input.is_action_just_pressed("move_up"):
+		gesture_performed("move_up")
+	if Input.is_action_just_pressed("move_down"):
+		gesture_performed("move_down")
 
 ## Child calls this when player wins
 func succeed() -> void:
