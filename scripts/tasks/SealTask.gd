@@ -1,113 +1,249 @@
 extends TaskBase
 ## SealTask — "SEAL IT!"
-## Drag the wax stamp onto the letter. Mouse drag / touch drag / WASD+Action.
-## Medieval chancery + modern drag interaction.
+## Drag the circular stamp onto the soft red wax on the opened scroll.
+## Mouse drag / touch drag / WASD + Action also work.
 
-var dragging: bool = false
-var stamp_pos: Vector2 = Vector2(380, 380)
-var stamp_grab_offset: Vector2 = Vector2.ZERO
-var letter_rect: Rect2 = Rect2(Vector2(560, 220), Vector2(280, 360))
-var stamp_size: Vector2 = Vector2(72, 72)
-var wasd_pos: Vector2 = Vector2(380, 380)
+const SEAL_CENTER: Vector2 = Vector2(700, 514)
+const SEAL_RADIUS: float = 44.0
+const STAMP_START: Vector2 = Vector2(320, 400)
+const STAMP_MIN: Vector2 = Vector2(70, 120)
+const STAMP_MAX: Vector2 = Vector2(1210, 620)
+const STAMP_SPEED: float = 420.0
 
-@onready var letter: ColorRect = $Letter
-@onready var stamp: ColorRect = $Stamp
-@onready var hint: Label = $CanvasLayer/Hint
-@onready var drop_zone: ColorRect = $Letter/DropZone
+var stamp_pos: Vector2 = STAMP_START
+
+var _scroll: Node2D
+var _wax: Node2D
+var _stamp: Node2D
 
 func _ready() -> void:
 	command_text = "SEAL IT!"
 	super._ready()
 
 func on_task_start() -> void:
-	stamp_pos = Vector2(320, 380)
-	wasd_pos = stamp_pos
-	dragging = false
-	if letter:
-		letter_rect = Rect2(letter.position, letter.size)
-	if stamp:
-		stamp.position = stamp_pos - stamp.size / 2
-		stamp.modulate = Color.WHITE
-	if drop_zone:
-		drop_zone.modulate.a = 0.35
-	if hint:
-		hint.text = "Drag the seal onto the letter!"
+	stamp_pos = STAMP_START
+	_build_scroll()
+	_build_wax()
+	_build_stamp()
+	_update_stamp()
+	_set_hint("WASD move   SPACE stamp")
 
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
-	# WASD alternative for controller/no-mouse: move stamp
+	track_movement()
+
+	# WASD moves the stamp; Space stamps it when it is over the wax.
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if dir.length() > 0.1:
-		wasd_pos += dir * 420.0 * delta
-		wasd_pos.x = clampf(wasd_pos.x, 40, 1240)
-		wasd_pos.y = clampf(wasd_pos.y, 120, 680)
-		if dragging or dir.length() > 0.2:
-			stamp_pos = wasd_pos
-			if stamp:
-				stamp.position = stamp_pos - stamp.size / 2
-	# Drop check: stamp center inside letter's wax circle (center of drop_zone)
-	if drop_zone and stamp:
-		var stamp_center := stamp_pos
-		var zone_center := drop_zone.global_position + drop_zone.size / 2 if drop_zone.get_parent() is ColorRect else letter_rect.get_center()
-		# Use letter center if drop_zone weird
-		if letter:
-			zone_center = letter.position + Vector2(letter.size.x / 2, letter.size.y * 0.72)
-		var d := stamp_center.distance_to(zone_center)
-		if d < 46:
-			drop_zone.modulate = Color("#7cff7c")
-			drop_zone.modulate.a = 0.7
-			if dragging and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-				_do_seal()
-			# WASD seal: press action while in zone
-			if Input.is_action_just_pressed("action") and dir.length() < 0.1:
-				# avoid instant — require deliberate
-				pass
-		else:
-			drop_zone.modulate = Color("#ffd94c")
-			drop_zone.modulate.a = 0.35
-		# Auto-seal for WASD when holding action in zone
-		if d < 46 and Input.is_action_pressed("action") and dir.length() > 0:
-			# If using WASD, holding action = pressing seal
-			if Input.is_action_just_pressed("action"):
-				_do_seal()
+		stamp_pos += dir * STAMP_SPEED * delta
+		stamp_pos.x = clampf(stamp_pos.x, STAMP_MIN.x, STAMP_MAX.x)
+		stamp_pos.y = clampf(stamp_pos.y, STAMP_MIN.y, STAMP_MAX.y)
+		_update_stamp()
+
+	var near: bool = stamp_pos.distance_to(SEAL_CENTER) < SEAL_RADIUS + 12.0
+	if _wax:
+		_wax.scale = Vector2(1.12, 1.12) if near else Vector2.ONE
+	if Input.is_action_just_pressed("action") and near:
+		gesture_performed("action")
+		_do_seal()
 
 func _do_seal() -> void:
 	if _finished:
 		return
-	if stamp:
-		stamp.modulate = Color("#ff7c7c")
-		create_tween().tween_property(stamp, "scale", Vector2(0.85, 0.85), 0.08).set_trans(Tween.TRANS_BACK)
-		create_tween().tween_property(stamp, "scale", Vector2.ONE, 0.12)
+	stamp_pos = SEAL_CENTER
+	_update_stamp()
+	if _stamp:
+		var tw := create_tween()
+		tw.tween_property(_stamp, "scale", Vector2(0.88, 0.88), 0.08).set_trans(Tween.TRANS_BACK)
+		tw.tween_property(_stamp, "scale", Vector2.ONE, 0.12)
+	if _wax:
+		_wax.scale = Vector2.ONE
 	succeed()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if _finished:
-		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			gesture_performed("click")
-			# Start drag if on stamp
-			if stamp and Rect2(stamp.position, stamp.size).has_point(event.position):
-				dragging = true
-				stamp_grab_offset = event.position - stamp_pos
-				if hint:
-					hint.text = ""
-		else:
-			if dragging:
-				dragging = false
-				# Check drop on release
-				var zone_center: Vector2 = letter.position + Vector2(letter.size.x / 2, letter.size.y * 0.72) if letter else Vector2(640, 360)
-				if stamp_pos.distance_to(zone_center) < 52:
-					_do_seal()
-	elif event is InputEventMouseMotion and dragging:
-		stamp_pos = event.position - stamp_grab_offset
-		if stamp:
-			stamp.position = stamp_pos - stamp.size / 2
-		gesture_performed("drag")
-	elif event.is_action_pressed("action") and not dragging:
-		gesture_performed("action")
-		# Controller press-to-seal: if stamp near zone
-		var zone_center: Vector2 = letter.position + Vector2(letter.size.x / 2, letter.size.y * 0.72) if letter else Vector2(640, 360)
-		if stamp_pos.distance_to(zone_center) < 52:
-			_do_seal()
+func _update_stamp() -> void:
+	if _stamp:
+		_stamp.position = stamp_pos
+
+# ---------------------------------------------------------------------------
+# Opened scroll with handwritten script
+# ---------------------------------------------------------------------------
+
+func _build_scroll() -> void:
+	_scroll = Node2D.new()
+	_scroll.name = "Scroll"
+	add_child(_scroll)
+
+	var outline := PackedVector2Array([
+		Vector2(536, 240), Vector2(864, 240), Vector2(870, 250),
+		Vector2(866, 562), Vector2(858, 576), Vector2(542, 576),
+		Vector2(534, 562), Vector2(538, 250),
+	])
+	var sheet := PackedVector2Array([
+		Vector2(544, 246), Vector2(856, 246), Vector2(862, 256),
+		Vector2(858, 558), Vector2(850, 568), Vector2(550, 568),
+		Vector2(542, 558), Vector2(544, 256),
+	])
+
+	var shadow := _poly(_scroll, outline, Color(0.0, 0.0, 0.0, 0.32))
+	shadow.position = Vector2(8, 10)
+	_poly(_scroll, outline, Color("#8a7350"))
+	_poly(_scroll, sheet, Color("#e8d8b0"))
+
+	# A few faint age spots.
+	_ellipse(_scroll, Vector2(800, 320), Vector2(16, 8), Color(0.55, 0.45, 0.28, 0.18))
+	_ellipse(_scroll, Vector2(600, 430), Vector2(24, 11), Color(0.55, 0.45, 0.28, 0.14))
+	_ellipse(_scroll, Vector2(780, 250), Vector2(10, 5), Color(0.55, 0.45, 0.28, 0.2))
+
+	_roll(232.0)
+	_roll(580.0)
+	_build_handwriting()
+
+func _roll(cy: float) -> void:
+	var left := 522.0
+	var right := 878.0
+	var h := 20.0
+
+	# Dark capsule outline.
+	_rect(_scroll, Vector2(left, cy - h), Vector2(right - left, h * 2.0), Color("#5a3f24"))
+	_circle(_scroll, Vector2(left, cy), h, Color("#5a3f24"))
+	_circle(_scroll, Vector2(right, cy), h, Color("#5a3f24"))
+
+	# Parchment roll body.
+	_rect(_scroll, Vector2(left + 4, cy - h + 4), Vector2(right - left - 8, h * 2.0 - 8.0), Color("#d9c49a"))
+	_circle(_scroll, Vector2(left + 4, cy), h - 4.0, Color("#d9c49a"))
+	_circle(_scroll, Vector2(right - 4, cy), h - 4.0, Color("#d9c49a"))
+
+	# Hard cel-shaded bands.
+	_rect(_scroll, Vector2(left + 4, cy + 6), Vector2(right - left - 8, 6), Color(0.35, 0.25, 0.14, 0.55))
+	_rect(_scroll, Vector2(left + 4, cy - 14), Vector2(right - left - 8, 4), Color(1.0, 0.94, 0.8, 0.65))
+
+	# Rolled ends.
+	_circle(_scroll, Vector2(left + 4, cy), 7, Color("#8a7350"))
+	_circle(_scroll, Vector2(left + 4, cy), 3, Color("#b8a27a"))
+	_circle(_scroll, Vector2(right - 4, cy), 7, Color("#8a7350"))
+	_circle(_scroll, Vector2(right - 4, cy), 3, Color("#b8a27a"))
+
+func _build_handwriting() -> void:
+	var hand := _hand_font()
+	_label(_scroll, "To the Crown,\n\nWe have held the pass.\nSend ale before the thaw.\n\nYour servant,", Vector2(572, 272), Vector2(272, 158), 19, Color("#2a1a10"), hand, -0.02)
+	_label(_scroll, "— Sir S.", Vector2(690, 432), Vector2(150, 30), 22, Color("#2a1a10"), hand, -0.05)
+
+func _hand_font() -> SystemFont:
+	var f := SystemFont.new()
+	f.font_names = PackedStringArray([
+		"Bradley Hand", "Snell Roundhand", "Noteworthy", "Marker Felt", "Comic Sans MS",
+	])
+	return f
+
+# ---------------------------------------------------------------------------
+# Soft red wax gob (unstamped)
+# ---------------------------------------------------------------------------
+
+func _build_wax() -> void:
+	_wax = Node2D.new()
+	_wax.name = "Wax"
+	_wax.position = SEAL_CENTER
+	add_child(_wax)
+
+	var shadow := _poly(_wax, _blob_points(39.0), Color(0.0, 0.0, 0.0, 0.3))
+	shadow.position = Vector2(4, 6)
+	_poly(_wax, _blob_points(42.0), Color("#3a0f0a"))
+	_poly(_wax, _blob_points(37.0), Color("#a8321a"))
+	_ellipse(_wax, Vector2(-10, -12), Vector2(15, 9), Color(1.0, 0.45, 0.32, 0.55))
+	_ellipse(_wax, Vector2(20, 18), Vector2(8, 5), Color("#8c2f12"))
+	_ellipse(_wax, Vector2(-22, 20), Vector2(6, 4), Color("#8c2f12"))
+
+func _blob_points(radius: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in 32:
+		var a := TAU * float(i) / 32.0
+		var r := radius * (1.0 + 0.055 * sin(a * 3.0 + 0.7) + 0.035 * cos(a * 5.0 - 0.4))
+		pts.append(Vector2(cos(a), sin(a)) * r)
+	return pts
+
+# ---------------------------------------------------------------------------
+# Circular stamp
+# ---------------------------------------------------------------------------
+
+func _build_stamp() -> void:
+	_stamp = Node2D.new()
+	_stamp.name = "Stamp"
+	_stamp.position = stamp_pos
+	_stamp.rotation = -0.1
+	add_child(_stamp)
+
+	# Handle.
+	_rect(_stamp, Vector2(-11, -60), Vector2(22, 34), Color("#1a1208"))
+	_rect(_stamp, Vector2(-8, -57), Vector2(16, 30), Color("#6b4a2a"))
+	_circle(_stamp, Vector2(0, -60), 11, Color("#1a1208"))
+	_circle(_stamp, Vector2(0, -60), 8, Color("#8a5a32"))
+
+	# Circular base.
+	_circle(_stamp, Vector2.ZERO, 40, Color("#1a1208"))
+	_circle(_stamp, Vector2.ZERO, 36, Color("#6b4a2a"))
+	_circle(_stamp, Vector2.ZERO, 30, Color("#c9b56a"))
+	_circle(_stamp, Vector2.ZERO, 27, Color("#6b4a2a"))
+
+	var sigil := _label(_stamp, "⚜", Vector2(-36, -26), Vector2(72, 52), 30, Color("#ffd94c"))
+	sigil.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sigil.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	sigil.add_theme_color_override("font_outline_color", Color("#1a1208"))
+	sigil.add_theme_constant_override("outline_size", 4)
+
+	_circle(_stamp, Vector2(-10, -12), 4, Color(1.0, 0.9, 0.7, 0.5))
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+func _poly(parent: Node, points: PackedVector2Array, color: Color) -> Polygon2D:
+	var p := Polygon2D.new()
+	p.polygon = points
+	p.color = color
+	parent.add_child(p)
+	return p
+
+func _rect(parent: Node, pos: Vector2, size: Vector2, color: Color) -> ColorRect:
+	var r := ColorRect.new()
+	r.position = pos
+	r.size = size
+	r.color = color
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(r)
+	return r
+
+func _circle(parent: Node, center: Vector2, radius: float, color: Color) -> Polygon2D:
+	var pts := PackedVector2Array()
+	for i in 36:
+		var a := TAU * float(i) / 36.0
+		pts.append(center + Vector2(cos(a), sin(a)) * radius)
+	return _poly(parent, pts, color)
+
+func _ellipse(parent: Node, center: Vector2, radius: Vector2, color: Color) -> Polygon2D:
+	var pts := PackedVector2Array()
+	for i in 36:
+		var a := TAU * float(i) / 36.0
+		pts.append(center + Vector2(cos(a) * radius.x, sin(a) * radius.y))
+	return _poly(parent, pts, color)
+
+func _label(parent: Node, text: String, pos: Vector2, size: Vector2, font_size: int, color: Color, font: Font = null, rotation: float = 0.0) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.position = pos
+	l.size = size
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	l.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	l.add_theme_font_size_override("font_size", font_size)
+	l.add_theme_color_override("font_color", color)
+	if font != null:
+		l.add_theme_font_override("font", font)
+	l.rotation = rotation
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(l)
+	return l
+
+func _set_hint(text: String) -> void:
+	var hint: Label = get_node_or_null("CanvasLayer/Hint")
+	if hint:
+		hint.text = text

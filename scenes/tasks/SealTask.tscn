@@ -10,56 +10,8 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 1280.0
 offset_bottom = 720.0
+mouse_filter = 2
 color = Color(0.12, 0.1, 0.08, 1)
-
-[node name="Letter" type="ColorRect" parent="."]
-offset_left = 560.0
-offset_top = 220.0
-offset_right = 840.0
-offset_bottom = 580.0
-color = Color(0.92, 0.88, 0.78, 1)
-
-[node name="LetterLines" type="Label" parent="Letter"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 264.0
-offset_bottom = 220.0
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.15, 0.12, 0.08, 1)
-text = "To the Crown:\n\nWe have held the\npass. Send ale.\n\n— Sir S."
-
-[node name="DropZone" type="ColorRect" parent="Letter"]
-offset_left = 100.0
-offset_top = 260.0
-offset_right = 180.0
-offset_bottom = 340.0
-color = Color(1, 0.851, 0.298, 0.35)
-
-[node name="DropLabel" type="Label" parent="Letter/DropZone"]
-offset_left = 0.0
-offset_top = 24.0
-offset_right = 80.0
-offset_bottom = 56.0
-theme_override_font_sizes/font_size = 22
-text = "○"
-horizontal_alignment = 1
-
-[node name="Stamp" type="ColorRect" parent="."]
-offset_left = 284.0
-offset_top = 344.0
-offset_right = 356.0
-offset_bottom = 416.0
-color = Color(0.55, 0.15, 0.12, 1)
-
-[node name="StampSigil" type="Label" parent="Stamp"]
-offset_left = 0.0
-offset_top = 18.0
-offset_right = 72.0
-offset_bottom = 54.0
-theme_override_font_sizes/font_size = 28
-theme_override_colors/font_color = Color(1, 0.851, 0.298, 1)
-text = "⚜"
-horizontal_alignment = 1
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -144,13 +96,15 @@ horizontal_alignment = 1
 
 
 [node name="Hint" type="Label" parent="CanvasLayer"]
-offset_left = 340.0
-offset_top = 80.0
-offset_right = 940.0
-offset_bottom = 104.0
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.95, 0.91, 0.78, 1)
-text = "Drag the seal onto the letter!"
+offset_left = 320.0
+offset_top = 686.0
+offset_right = 960.0
+offset_bottom = 708.0
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 0.851, 0.298, 1)
+theme_override_colors/font_outline_color = Color(0.09, 0.07, 0.03, 1)
+theme_override_constants/outline_size = 4
+text = "WASD move   SPACE stamp"
 horizontal_alignment = 1
 
 [node name="TimerBar" type="ProgressBar" parent="CanvasLayer"]

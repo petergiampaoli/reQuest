@@ -81,12 +81,12 @@ reQuest/
       BossTask.tscn      # [boss]    SLAY THE WARDEN! — 2x work, same time, alternate MASH/STOMP
       MashTask.tscn      # [mash]  HAMMER THE ANVIL! — mash F/X
       DodgeTask.tscn     # [move]  DODGE! — WASD survive barrels
-      ParryTask.tscn     # [timing] PARRY! — space in gold zone
+      ParryTask.tscn     # [timing] PARRY! — two gauntlet-held swords; SPACE when both gold blade zones overlap (3 rounds)
       SortTask.tscn      # [click] GRAB THE LOOT! — click coins
       LockpickTask.tscn  # [rotate] PICK IT! — A/D find sweet spot + SPACE
       ArcherTask.tscn    # [aim]   LOOSE! — WASD aim the arrow tip + SPACE shoot at a circular target
-      StirTask.tscn      # [circle] STIR THE STEW! — circular WASD/drag
-      SealTask.tscn      # [drag]  SEAL IT! — drag stamp to letter
+      StirTask.tscn      # [circle] STIR THE STEW! — isometric cauldron + fire, large ladle; circle with WASD
+      SealTask.tscn      # [move]  SEAL IT! — WASD move + SPACE stamp; opened scroll, red wax gob, circular stamp
       ChantTask.tscn     # [memory] CHANT! — carved-stone rune sequence with [W]/[D]/[S]/[A] key letters
       BalanceTask.tscn   # [balance] DON'T SPILL! — tilt tray A/D
       RideTask.tscn      # [rank2]  RIDE! — third-person chase; A/D steer + SPACE jump (dodge barrels, jump fences)

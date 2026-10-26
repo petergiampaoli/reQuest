@@ -12,36 +12,6 @@ offset_right = 1280.0
 offset_bottom = 720.0
 color = Color(0.12, 0.08, 0.08, 1)
 
-[node name="Track" type="ColorRect" parent="."]
-offset_left = 340.0
-offset_top = 360.0
-offset_right = 940.0
-offset_bottom = 400.0
-color = Color(0.18, 0.18, 0.2, 1)
-
-[node name="Zone" type="ColorRect" parent="Track"]
-offset_left = 260.0
-offset_top = 0.0
-offset_right = 340.0
-offset_bottom = 40.0
-color = Color(1, 0.851, 0.298, 1)
-
-[node name="Marker" type="ColorRect" parent="Track"]
-offset_left = 0.0
-offset_top = -6.0
-offset_right = 16.0
-offset_bottom = 46.0
-color = Color(1, 0.29, 0.29, 1)
-
-[node name="Sword" type="Label" parent="."]
-offset_left = 590.0
-offset_top = 240.0
-offset_right = 690.0
-offset_bottom = 320.0
-theme_override_font_sizes/font_size = 64
-text = "⚔"
-horizontal_alignment = 1
-
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="CommandLabel" type="Label" parent="CanvasLayer"]
@@ -125,13 +95,15 @@ horizontal_alignment = 1
 
 
 [node name="Prompt" type="Label" parent="CanvasLayer"]
-offset_left = 340.0
-offset_top = 420.0
-offset_right = 940.0
-offset_bottom = 444.0
+offset_left = 320.0
+offset_top = 686.0
+offset_right = 960.0
+offset_bottom = 708.0
 theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.95, 0.91, 0.78, 1)
-text = "[SPACE] / [E] when in GOLD!"
+theme_override_colors/font_color = Color(1, 0.851, 0.298, 1)
+theme_override_colors/font_outline_color = Color(0.09, 0.07, 0.03, 1)
+theme_override_constants/outline_size = 4
+text = "SPACE when both gold areas overlap"
 horizontal_alignment = 1
 
 [node name="TimerBar" type="ProgressBar" parent="CanvasLayer"]
