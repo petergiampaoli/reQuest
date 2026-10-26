@@ -1,60 +1,76 @@
 extends TaskBase
-## CrankTask — "CRANK IT!"
-## Two gestures at once: hold A/D to spin the pointer, mash F on the gold zone.
-## If you stop spinning, the winch seizes and you fail.
+## CrankTask — "OPEN THREE CHESTS."
+## The wheel spins automatically. Press F when the pointer crosses the gold zone.
+## Land the required number of catches before the timer expires.
 
-const CENTER: Vector2 = Vector2(640, 300)
-const RADIUS: float = 210.0
+const CENTER: Vector2 = Vector2(640, 340)
+const RADIUS: float = 190.0
 const SPIN_SPEED: float = 3.0
+const BASE_CATCHES: int = 3
+const HOT_ARC: float = 0.45
+const MIN_TARGET_GAP: float = 1.2
 
-var needles: float = 0.0          # pointer speed
 var needle_angle: float = 0.0
 var target_angle: float = 0.0
 var catches: int = 0
-const NEED_REPEAT_CATCHES: int = 6
-var stopped_time: float = 0.0
+var required_catches: int = BASE_CATCHES
+var progress_label: Label = null
 
 func _ready() -> void:
-	command_text = "CRANK IT!"
+	required_catches = _required_catches()
+	command_text = "OPEN %s CHESTS." % _number_word(required_catches)
 	super._ready()
 
 func on_task_start() -> void:
-	target_angle = randf() * TAU
+	catches = 0
+	needle_angle = 0.0
+	target_angle = _pick_target_angle()
+	progress_label = get_node_or_null("CanvasLayer/ProgressLabel")
+	if progress_label == null:
+		progress_label = _add_progress_label()
+	progress_label.text = "0/%d" % required_catches
 	_queue_redraw()
-	_set_hint("Hold A/D to spin   F on gold")
+	_set_hint("Press F when the needle crosses gold")
 
 func on_task_tick(delta: float) -> void:
 	if _finished:
 		return
-	track_movement()
-	var dir := Input.get_axis("move_left", "move_right")
-	if dir != 0.0:
-		needles = dir * SPIN_SPEED
-		needle_angle += needles * delta
-		stopped_time = 0.0
-	else:
-		needles = 0.0
-		stopped_time += delta
-		if stopped_time > 1.1:
-			fail()
-			return
-
-	var diff := _norm_angle(needle_angle - target_angle)
-	var hot: bool = absf(diff) < 0.45
-	# Make the zone glow while the needle is inside it
+	# Automatic spin — the only input is the F/mash button.
+	needle_angle = fposmod(needle_angle + SPIN_SPEED * delta, TAU)
+	var hot: bool = absf(_norm_angle(needle_angle - target_angle)) < HOT_ARC
 	queue_redraw()
-
-	var label: Label = get_node_or_null("CanvasLayer/ProgressLabel")
-	if not label:
-		label = _add_progress_label()
 
 	if Input.is_action_just_pressed("mash") and hot:
 		gesture_performed("mash")
 		catches += 1
-		target_angle = randf() * TAU
-		label.text = "%d/%d" % [catches, NEED_REPEAT_CATCHES]
-		if catches >= NEED_REPEAT_CATCHES:
+		target_angle = _pick_target_angle()
+		if progress_label:
+			progress_label.text = "%d/%d" % [catches, required_catches]
+		if catches >= required_catches:
 			succeed()
+
+## Base 3 catches; +1 for every 0.5 difficulty above 1.0.
+func _required_catches() -> int:
+	return BASE_CATCHES + maxi(0, int((GameManager.difficulty - 1.0) * 2.0))
+
+## Pick a new gold zone that isn't already under the pointer.
+func _pick_target_angle() -> float:
+	var a := randf() * TAU
+	var guard := 0
+	while absf(_norm_angle(a - needle_angle)) < MIN_TARGET_GAP and guard < 24:
+		a = randf() * TAU
+		guard += 1
+	return a
+
+func _number_word(n: int) -> String:
+	match n:
+		3: return "THREE"
+		4: return "FOUR"
+		5: return "FIVE"
+		6: return "SIX"
+		7: return "SEVEN"
+		8: return "EIGHT"
+		_: return str(n)
 
 func _norm_angle(a: float) -> float:
 	return fposmod(a + PI, TAU) - PI
@@ -65,8 +81,8 @@ func _draw() -> void:
 	draw_circle(c, RADIUS * 0.42, Color(0.16, 0.10, 0.05))
 	draw_arc(c, RADIUS * 0.42, 0, TAU, 48, Color("#6b5a3e"), 6.0, true)
 	# Target zone
-	var hot: bool = absf(_norm_angle(needle_angle - target_angle)) < 0.45
-	draw_sector(c, target_angle - 0.45, target_angle + 0.45, RADIUS, Color("#ffd94c") if hot else Color(0.55, 0.45, 0.22))
+	var hot: bool = absf(_norm_angle(needle_angle - target_angle)) < HOT_ARC
+	draw_sector(c, target_angle - HOT_ARC, target_angle + HOT_ARC, RADIUS, Color("#ffd94c") if hot else Color(0.55, 0.45, 0.22))
 	# Pointer
 	var tip := Vector2.from_angle(needle_angle)
 	var p_from := c + tip * 30.0
@@ -88,7 +104,7 @@ func _queue_redraw() -> void:
 func _add_progress_label() -> Label:
 	var label := Label.new()
 	label.name = "ProgressLabel"
-	label.text = "0/%d" % NEED_REPEAT_CATCHES
+	label.text = "0/%d" % required_catches
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 26)
 	label.add_theme_color_override("font_color", Color(1, 0.851, 0.298))

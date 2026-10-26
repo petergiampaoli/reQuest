@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# play — launch a single reQuest task for demo/testing.
+# Usage: ./play <task>   e.g. ./play archer
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CATALOG="$ROOT/scripts/TaskManager.gd"
+
+usage() {
+	echo "Usage: ./play <task> [--windowed]"
+	echo
+	echo "Available tasks:"
+	# Catalog entries are one per line: {"id": "archer", "name": "ARCHER", ...}
+	awk -F'"' '/"id":/ { printf "  %-10s %s\n", $4, $8 }' "$CATALOG"
+}
+
+if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
+	usage
+	exit 0
+fi
+
+TASK="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+if ! grep -qiE "\"id\":[[:space:]]*\"$TASK\"" "$CATALOG" \
+	&& ! grep -qiE "\"name\":[[:space:]]*\"$TASK\"" "$CATALOG"; then
+	echo "Unknown task: $1" >&2
+	echo >&2
+	usage >&2
+	exit 1
+fi
+
+GODOT_BIN="${GODOT_BIN:-}"
+if [[ -z "$GODOT_BIN" ]]; then
+	if command -v godot >/dev/null 2>&1; then
+		GODOT_BIN="godot"
+	elif command -v godot4 >/dev/null 2>&1; then
+		GODOT_BIN="godot4"
+	elif [[ -x "/Applications/Godot.app/Contents/MacOS/Godot" ]]; then
+		GODOT_BIN="/Applications/Godot.app/Contents/MacOS/Godot"
+	else
+		echo "Could not find Godot. Set GODOT_BIN=/path/to/godot" >&2
+		exit 1
+	fi
+fi
+
+WINDOW_MODE="--fullscreen"
+if [[ "${2:-}" == "--windowed" || "${2:-}" == "-w" ]]; then
+	WINDOW_MODE="--windowed"
+fi
+
+exec "$GODOT_BIN" "$WINDOW_MODE" --path "$ROOT" "res://scenes/DemoRunner.tscn" -- "$TASK"

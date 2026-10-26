@@ -1,7 +1,10 @@
 extends TaskBase
 ## ChantTask — "CHANT!"
-## Simon-style: 4 runes flash in sequence, player repeats via Arrow keys / WASD / face buttons.
-## Input mapping: Up/W = ᛉ, Right/D = ᛟ, Down/S = ᛝ, Left/A = ᛗ
+## Simon-style: 4 rune stones flash in sequence, player repeats via Arrow keys / WASD / face buttons.
+## Input mapping: Up/W = ᛉ [W], Right/D = ᛟ [D], Down/S = ᛝ [S], Left/A = ᛗ [A]
+
+const RUNE_GLYPHS := ["ᛉ", "ᛟ", "ᛝ", "ᛗ"]
+const RUNE_KEYS := ["W", "D", "S", "A"]
 
 var sequence: Array[int] = [] # 0..3
 var showing: bool = true
@@ -10,7 +13,7 @@ var show_t: float = 0.0
 var input_index: int = 0
 var seq_len: int = 4
 
-@onready var runes: Array = [] # filled in on_task_start
+var runes: Array = [] # filled in on_task_start
 @onready var prompt: Label = $CanvasLayer/Prompt
 
 func _ready() -> void:
@@ -35,16 +38,94 @@ func on_task_start() -> void:
 			r.scale = Vector2.ONE
 	if prompt:
 		prompt.text = "Watch…"
-	_ensure_rune_labels()
+	_build_rune_stones()
 
-func _ensure_rune_labels() -> void:
-	var glyphs := ["ᛉ", "ᛟ", "ᛝ", "ᛗ"]
+# ---------------------------------------------------------------------------
+# Stone rune tablets — cel-shaded carved stone
+# ---------------------------------------------------------------------------
+
+func _build_rune_stones() -> void:
 	for i in 4:
-		var node: Label = get_node_or_null("Rune%d" % i)
-		if node and node is Label:
-			node.text = glyphs[i]
-			node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var root := get_node_or_null("Rune%d" % i) as Node2D
+		if root == null:
+			continue
+		for child in root.get_children():
+			child.free()
+		_build_rune_stone(root, i)
+
+func _build_rune_stone(root: Node2D, index: int) -> void:
+	var outer := _stone_outer()
+	var face := _scaled(outer, 0.94)
+	var panel := _stone_panel()
+
+	# Slab: dark outline + hard bevel highlights/shadows + flat stone face.
+	_poly(root, outer, Color("#14120f"))
+	var bevel_shadow := _poly(root, face, Color("#403c34"))
+	bevel_shadow.position = Vector2(3, 3)
+	var bevel_light := _poly(root, face, Color("#9a9384"))
+	bevel_light.position = Vector2(-3, -3)
+	_poly(root, face, Color("#6b6659"))
+
+	# Recessed panel the rune is chiselled into.
+	_poly(root, _scaled(panel, 1.05), Color("#2a2721"))
+	var panel_shadow := _poly(root, panel, Color("#2e2b25"))
+	panel_shadow.position = Vector2(-2, -2)
+	var panel_light := _poly(root, panel, Color("#8a8476"))
+	panel_light.position = Vector2(2, 2)
+	_poly(root, panel, Color("#4c483f"))
+
+	_add_crack(root, index)
+
+	# Engraved rune: dark cut with a light lower-right lip.
+	var glyph: String = String(RUNE_GLYPHS[index])
+	var rune_rect := Rect2(-58, -50, 116, 76)
+	_label(root, glyph, rune_rect.position + Vector2(-2, -2), rune_rect.size, 64, Color("#211e19"), Color("#211e19"), 3)
+	_label(root, glyph, rune_rect.position + Vector2(2, 2), rune_rect.size, 64, Color("#b9b2a2"), Color("#b9b2a2"), 3)
+	_label(root, glyph, rune_rect.position, rune_rect.size, 64, Color("#2b2721"), Color("#2b2721"), 3)
+
+	# Associated key letter underneath the symbol.
+	_label(root, "[%s]" % String(RUNE_KEYS[index]), Vector2(-40, 32), Vector2(80, 24), 18, Color("#ffd94c"), Color("#1a1208"), 4)
+
+func _stone_outer() -> PackedVector2Array:
+	return PackedVector2Array([
+		Vector2(-64, -86), Vector2(60, -86), Vector2(74, -72), Vector2(74, -16),
+		Vector2(68, 48), Vector2(54, 84), Vector2(-46, 86), Vector2(-70, 74),
+		Vector2(-74, 20), Vector2(-70, -50),
+	])
+
+func _stone_panel() -> PackedVector2Array:
+	return PackedVector2Array([
+		Vector2(-52, -58), Vector2(48, -58), Vector2(58, -48), Vector2(58, 22),
+		Vector2(52, 52), Vector2(42, 60), Vector2(-42, 60), Vector2(-56, 50),
+		Vector2(-58, 18), Vector2(-56, -40),
+	])
+
+func _add_crack(root: Node2D, index: int) -> void:
+	var cracks := [
+		PackedVector2Array([Vector2(-66, -58), Vector2(-54, -40), Vector2(-60, -24)]),
+		PackedVector2Array([Vector2(66, 28), Vector2(60, 42), Vector2(64, 62)]),
+		PackedVector2Array([Vector2(-62, 52), Vector2(-52, 58)]),
+		PackedVector2Array([Vector2(58, -60), Vector2(66, -48)]),
+	]
+	var pts: PackedVector2Array = cracks[index % cracks.size()]
+	var crack := Line2D.new()
+	crack.points = pts
+	crack.width = 2.0
+	crack.default_color = Color("#35312a")
+	root.add_child(crack)
+
+	var lit_pts := PackedVector2Array()
+	for p in pts:
+		lit_pts.append(p + Vector2(1.5, 1.5))
+	var lit := Line2D.new()
+	lit.points = lit_pts
+	lit.width = 1.0
+	lit.default_color = Color("#8a8476")
+	root.add_child(lit)
+
+# ---------------------------------------------------------------------------
+# Sequence flow
+# ---------------------------------------------------------------------------
 
 func on_task_tick(delta: float) -> void:
 	if _finished:
@@ -116,7 +197,43 @@ func _unhandled_input(event: InputEvent) -> void:
 		if input_index >= sequence.size():
 			succeed()
 	else:
-		# Wrong rune
+		# Wrong rune — shake the stone and settle it back.
 		if node:
-			create_tween().tween_property(node, "position:y", node.position.y + 8, 0.06).set_trans(Tween.TRANS_BACK)
+			var start_y: float = node.position.y
+			var tw := create_tween()
+			tw.tween_property(node, "position:y", start_y + 8.0, 0.06).set_trans(Tween.TRANS_BACK)
+			tw.tween_property(node, "position:y", start_y, 0.08)
 		fail()
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+func _poly(parent: Node, points: PackedVector2Array, color: Color) -> Polygon2D:
+	var p := Polygon2D.new()
+	p.polygon = points
+	p.color = color
+	parent.add_child(p)
+	return p
+
+func _scaled(points: PackedVector2Array, factor: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in points:
+		out.append(p * factor)
+	return out
+
+func _label(parent: Node, text: String, pos: Vector2, size: Vector2, font_size: int, color: Color, outline_color: Color, outline_size: int) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.position = pos
+	l.size = size
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", font_size)
+	l.add_theme_color_override("font_color", color)
+	if outline_size > 0:
+		l.add_theme_color_override("font_outline_color", outline_color)
+		l.add_theme_constant_override("outline_size", outline_size)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(l)
+	return l

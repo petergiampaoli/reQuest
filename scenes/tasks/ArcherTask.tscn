@@ -19,56 +19,6 @@ offset_right = 1120.0
 offset_bottom = 560.0
 color = Color(0.18, 0.16, 0.13, 1)
 
-[node name="Target" type="ColorRect" parent="."]
-offset_left = 608.0
-offset_top = 308.0
-offset_right = 672.0
-offset_bottom = 372.0
-color = Color(0.78, 0.22, 0.18, 1)
-
-[node name="TargetRing" type="ColorRect" parent="Target"]
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 56.0
-offset_bottom = 56.0
-color = Color(0.95, 0.91, 0.78, 1)
-
-[node name="TargetCore" type="ColorRect" parent="Target"]
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 44.0
-offset_bottom = 44.0
-color = Color(0.22, 0.22, 0.24, 1)
-
-[node name="Crosshair" type="ColorRect" parent="."]
-offset_left = 620.0
-offset_top = 480.0
-offset_right = 660.0
-offset_bottom = 520.0
-color = Color(0.95, 0.91, 0.78, 0.95)
-
-[node name="CrossH" type="ColorRect" parent="Crosshair"]
-offset_left = 0.0
-offset_top = 18.0
-offset_right = 40.0
-offset_bottom = 22.0
-color = Color(0.08, 0.06, 0.04, 1)
-
-[node name="CrossV" type="ColorRect" parent="Crosshair"]
-offset_left = 18.0
-offset_top = 0.0
-offset_right = 22.0
-offset_bottom = 40.0
-color = Color(0.08, 0.06, 0.04, 1)
-
-[node name="Arrow" type="ColorRect" parent="."]
-offset_left = 628.0
-offset_top = 488.0
-offset_right = 652.0
-offset_bottom = 512.0
-color = Color(1, 0.851, 0.298, 1)
-visible = false
-
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="CommandLabel" type="Label" parent="CanvasLayer"]
@@ -152,13 +102,15 @@ horizontal_alignment = 1
 
 
 [node name="Hint" type="Label" parent="CanvasLayer"]
-offset_left = 340.0
-offset_top = 80.0
-offset_right = 940.0
-offset_bottom = 104.0
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.95, 0.91, 0.78, 1)
-text = "Aim with MOUSE / WASD  •  [SPACE] to shoot"
+offset_left = 320.0
+offset_top = 686.0
+offset_right = 960.0
+offset_bottom = 708.0
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 0.851, 0.298, 1)
+theme_override_colors/font_outline_color = Color(0.09, 0.07, 0.03, 1)
+theme_override_constants/outline_size = 4
+text = "WASD aim   SPACE shoot"
 horizontal_alignment = 1
 
 [node name="TimerBar" type="ProgressBar" parent="CanvasLayer"]

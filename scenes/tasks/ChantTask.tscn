@@ -12,54 +12,17 @@ offset_right = 1280.0
 offset_bottom = 720.0
 color = Color(0.08, 0.09, 0.13, 1)
 
-[node name="Rune0" type="Label" parent="."]
-offset_left = 380.0
-offset_top = 280.0
-offset_right = 500.0
-offset_bottom = 400.0
-theme_override_font_sizes/font_size = 64
-theme_override_colors/font_color = Color(0.95, 0.91, 0.78, 1)
-theme_override_colors/font_outline_color = Color(0.09, 0.07, 0.03, 1)
-theme_override_constants/outline_size = 6
-text = "ᛉ"
-horizontal_alignment = 1
+[node name="Rune0" type="Node2D" parent="."]
+position = Vector2(440, 340)
 
-[node name="Rune1" type="Label" parent="."]
-offset_left = 540.0
-offset_top = 280.0
-offset_right = 660.0
-offset_bottom = 400.0
-theme_override_font_sizes/font_size = 64
-text = "ᛟ"
-horizontal_alignment = 1
+[node name="Rune1" type="Node2D" parent="."]
+position = Vector2(600, 340)
 
-[node name="Rune2" type="Label" parent="."]
-offset_left = 700.0
-offset_top = 280.0
-offset_right = 820.0
-offset_bottom = 400.0
-theme_override_font_sizes/font_size = 64
-text = "ᛝ"
-horizontal_alignment = 1
+[node name="Rune2" type="Node2D" parent="."]
+position = Vector2(760, 340)
 
-[node name="Rune3" type="Label" parent="."]
-offset_left = 860.0
-offset_top = 280.0
-offset_right = 980.0
-offset_bottom = 400.0
-theme_override_font_sizes/font_size = 64
-text = "ᛗ"
-horizontal_alignment = 1
-
-[node name="KeyHints" type="Label" parent="."]
-offset_left = 380.0
-offset_top = 410.0
-offset_right = 980.0
-offset_bottom = 434.0
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.7, 0.68, 0.62, 1)
-text = "  W/↑        D/→        S/↓        A/←"
-horizontal_alignment = 1
+[node name="Rune3" type="Node2D" parent="."]
+position = Vector2(920, 340)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 

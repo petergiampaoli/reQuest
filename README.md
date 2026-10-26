@@ -12,6 +12,13 @@ Inspired by WarioWare's cadence + medieval woodcut (Baker-era ink, graffiti, dis
   godot --path reQuest
   ```
 
+## Demo a single task
+Launch one micro-task directly (skips the quest and boss flow):
+```sh
+./play archer
+```
+Use any catalog id from `TaskManager.TASKS` — `./play --help` lists them all. The demo opens fullscreen; add `--windowed` to keep a window. In the demo, **R** retries the same task and **Esc** quits. Test runs are in-memory only and never touch your save.
+
 ## Gameplay loop — `scripts/GameManager.gd:1`
 ```
 StartMenu ──► Quest (10 tasks) ──► BOSS ──► LongRest ──► next Quest (harder) ──┬─► endless
@@ -77,13 +84,13 @@ reQuest/
       ParryTask.tscn     # [timing] PARRY! — space in gold zone
       SortTask.tscn      # [click] GRAB THE LOOT! — click coins
       LockpickTask.tscn  # [rotate] PICK IT! — A/D find sweet spot + SPACE
-      ArcherTask.tscn    # [aim]   LOOSE! — mouse/WASD aim + shoot
+      ArcherTask.tscn    # [aim]   LOOSE! — WASD aim the arrow tip + SPACE shoot at a circular target
       StirTask.tscn      # [circle] STIR THE STEW! — circular WASD/drag
       SealTask.tscn      # [drag]  SEAL IT! — drag stamp to letter
-      ChantTask.tscn     # [memory] CHANT! — Simon WASD/Arrows sequence
+      ChantTask.tscn     # [memory] CHANT! — carved-stone rune sequence with [W]/[D]/[S]/[A] key letters
       BalanceTask.tscn   # [balance] DON'T SPILL! — tilt tray A/D
-      RideTask.tscn      # [rank2]  RIDE! — A/D steer + F jump (dodge rocks, jump fences)
-      CrankTask.tscn     # [rank2]  CRANK IT! — hold A/D spin the winch + F on the gold
+      RideTask.tscn      # [rank2]  RIDE! — third-person chase; A/D steer + SPACE jump (dodge barrels, jump fences)
+      CrankTask.tscn     # [rank2]  OPEN THREE CHESTS. — auto-spinning wheel; press F on the gold (3+ catches)
       SpinTask.tscn      # [rank2]  SPIN THE WHEEL! — hold A/D keep it spinning + SPACE to mold
       TightWireTask.tscn # [rank2]  TIGHT-WIRE! — A/D balance + SPACE to step
       SmithTask.tscn     # [rank2]  FUEL THE FIRE! — F pump the bellows + A/D forge on the glow
